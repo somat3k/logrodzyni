@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libssl3 libboost-system1.74.0 ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -r -s /sbin/nologin proxy
+RUN id proxy 2>/dev/null || useradd -r -s /sbin/nologin proxy
 
 COPY --from=builder /src/proxy-core/build/proxy-core /usr/local/bin/proxy-core
 RUN chmod 755 /usr/local/bin/proxy-core

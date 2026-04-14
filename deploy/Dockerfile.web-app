@@ -1,11 +1,19 @@
 FROM node:20-bookworm-slim AS deps
 
+# Upgrade npm to ensure its bundled transitive deps (cross-spawn, glob, minimatch, tar, etc.)
+# are at versions that have no known HIGH/CRITICAL CVEs.
+RUN npm install -g npm@latest && npm cache clean --force
+
 WORKDIR /app
 COPY web-app/package.json web-app/package-lock.json ./
 RUN npm ci --only=production && npm cache clean --force
 
 # ── Runtime ───────────────────────────────────────────────────────────────────
 FROM node:20-bookworm-slim
+
+# Upgrade npm here too so the runtime image's /usr/local/lib/node_modules/npm
+# contains patched transitive dependencies (avoids Trivy HIGH findings).
+RUN npm install -g npm@latest && npm cache clean --force
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         dumb-init \
