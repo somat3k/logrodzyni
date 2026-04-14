@@ -1,6 +1,9 @@
 #include "proxy_server.hpp"
 #include "logger.hpp"
+#include <boost/asio.hpp>
 #include <thread>
+
+namespace net = boost::asio;
 
 namespace proxy_core {
 
