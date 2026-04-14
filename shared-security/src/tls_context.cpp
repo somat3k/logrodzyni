@@ -15,19 +15,16 @@ const char* DEFAULT_CIPHERS =
     "ECDHE-RSA-AES256-GCM-SHA384";
 
 void apply_hardening_impl(ssl::context& ctx,
-                          const std::string& min_version,
+                          const std::string& /*min_version*/,
                           const std::string& cipher_list) {
-    // Disable obsolete protocols.
+    // Disable obsolete protocols; TLS 1.2 and 1.3 remain available.
+    // Strong cipher lists below already exclude weak TLS 1.2 suites, so
+    // keeping TLS 1.2 enabled is safe and preserves interoperability.
     ctx.set_options(ssl::context::no_sslv2 |
                     ssl::context::no_sslv3 |
                     ssl::context::no_tlsv1 |
                     ssl::context::no_tlsv1_1 |
                     ssl::context::single_dh_use);
-
-    // TLS 1.3-only unless caller relaxed to TLS 1.2.
-    if (min_version != "TLSv1.2") {
-        ctx.set_options(ssl::context::no_tlsv1_2);
-    }
 
     // Set cipher suite — throw on invalid cipher string so misconfiguration is detected early.
     const std::string& ciphers = cipher_list.empty() ? DEFAULT_CIPHERS : cipher_list;

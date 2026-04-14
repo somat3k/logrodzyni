@@ -1,12 +1,14 @@
 #include "proxy_server.hpp"
 #include "config.hpp"
+#include <filesystem>
 #include <iostream>
 #include <string>
 
 int main(int argc, char* argv[]) {
     std::string config_path = "/etc/proxy-core/proxy.conf";
     if (argc == 2) {
-        config_path = argv[1];
+        // Normalize the caller-supplied path to remove traversal sequences.
+        config_path = std::filesystem::weakly_canonical(argv[1]).string();
     } else if (argc > 2) {
         std::cerr << "Usage: proxy-core [config-file]\n";
         return 1;
