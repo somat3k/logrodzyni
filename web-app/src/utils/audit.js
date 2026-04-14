@@ -1,18 +1,18 @@
 'use strict';
 
+const { AuditLog } = require('../db');
 const logger = require('./logger');
 
-// Append an audit event.  In production this would write to a DB / SIEM.
-function audit(action, actor, target, result, meta = {}) {
-  logger.info({
-    type:      'AUDIT',
-    timestamp: new Date().toISOString(),
-    action,
-    actor,
-    target,
-    result,
-    ...meta,
-  });
+/**
+ * Append an audit event to the persistent audit log.
+ */
+function audit(event, actor, target, result, meta) {
+  try {
+    AuditLog.append(event, actor, target, result, meta);
+  } catch (err) {
+    logger.error({ msg: 'Audit log write failed', error: err.message });
+  }
+  logger.info({ event, actor, target, result });
 }
 
 module.exports = { audit };

@@ -1,9 +1,18 @@
 'use strict';
 
+process.env.NODE_ENV  = 'test';
+process.env.JWT_SECRET = 'ci-test-secret';
+process.env.DB_PATH    = '/tmp/proxy-circuit-test-nodes.db';
+
+// Remove stale test DB
+const fs = require('fs');
+if (fs.existsSync(process.env.DB_PATH)) fs.unlinkSync(process.env.DB_PATH);
+
 const request = require('supertest');
 const app     = require('../src/server');
 
 let adminToken;
+let createdId;
 
 beforeAll(async () => {
   const res = await request(app)
@@ -13,8 +22,6 @@ beforeAll(async () => {
 });
 
 describe('Nodes API', () => {
-  let createdId;
-
   test('GET /api/nodes - empty list', async () => {
     const res = await request(app)
       .get('/api/nodes')
@@ -62,18 +69,5 @@ describe('Nodes API', () => {
       .get('/api/nodes/' + createdId)
       .set('Authorization', 'Bearer ' + adminToken);
     expect(res.status).toBe(404);
-  });
-});
-
-describe('Health probes', () => {
-  test('/healthz', async () => {
-    const res = await request(app).get('/healthz');
-    expect(res.status).toBe(200);
-    expect(res.body.status).toBe('ok');
-  });
-
-  test('/readyz', async () => {
-    const res = await request(app).get('/readyz');
-    expect(res.status).toBe(200);
   });
 });

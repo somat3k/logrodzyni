@@ -5,178 +5,437 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Proxy Circuit — Control Plane</title>
   <style>
-    :root {
-      --bg:    #0f1117;
-      --panel: #1a1d26;
-      --accent:#4f8ef7;
-      --ok:    #2ecc71;
-      --warn:  #f39c12;
-      --err:   #e74c3c;
-      --text:  #e2e8f0;
-      --muted: #94a3b8;
+    :root{
+      --bg:#0f1117;--panel:#1a1d26;--panel2:#21263a;
+      --accent:#4f8ef7;--accent2:#7c3aed;--ok:#2ecc71;
+      --warn:#f39c12;--err:#e74c3c;--text:#e2e8f0;--muted:#94a3b8;
+      --border:#2d3244;--radius:8px;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
-    header { background: var(--panel); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2d3244; }
-    header h1 { font-size: 1.2rem; color: var(--accent); }
-    #user-info { font-size: .85rem; color: var(--muted); }
-    #logout-btn { margin-left: 1rem; padding: .3rem .8rem; background: var(--err); border: none; border-radius: 4px; color: #fff; cursor: pointer; font-size: .8rem; }
+    /* ── Auth screen ── */
+    #auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+    .auth-card{background:var(--panel);border-radius:12px;width:100%;max-width:420px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+    .auth-card-header{background:linear-gradient(135deg,#1a1d26,#21263a);padding:2rem;text-align:center}
+    .auth-logo{font-size:2.5rem;margin-bottom:.5rem}
+    .auth-card-header h1{font-size:1.3rem;color:var(--accent);letter-spacing:.03em}
+    .auth-card-header p{font-size:.85rem;color:var(--muted);margin-top:.3rem}
+    .auth-tabs{display:flex;border-bottom:1px solid var(--border)}
+    .auth-tab{flex:1;padding:.75rem;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;font-weight:500;transition:all .2s;border-bottom:2px solid transparent}
+    .auth-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:rgba(79,142,247,.05)}
+    .auth-body{padding:1.5rem}
+    .auth-panel{display:none}.auth-panel.active{display:block}
+    .field{margin-bottom:1rem}
+    .field label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:.35rem;font-weight:500}
+    .field input{width:100%;padding:.65rem .85rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:.93rem;transition:border-color .2s}
+    .field input:focus{outline:none;border-color:var(--accent)}
+    .field small{display:block;margin-top:.3rem;font-size:.78rem;color:var(--muted)}
+    .btn{display:block;width:100%;padding:.75rem;border:none;border-radius:var(--radius);font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s;margin-top:.25rem}
+    .btn-primary{background:var(--accent);color:#fff}
+    .btn-primary:hover{opacity:.88;transform:translateY(-1px)}
+    .btn-secondary{background:var(--panel2);color:var(--text);border:1px solid var(--border)}
+    .btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+    .btn-wallet{background:linear-gradient(135deg,#f6851b,#e4761b);color:#fff}
+    .btn-wallet:hover{opacity:.88}
+    .btn-guest{background:linear-gradient(135deg,#2d3244,#1a1d26);color:var(--muted);border:1px solid var(--border)}
+    .btn-guest:hover{color:var(--text);border-color:var(--muted)}
+    .auth-error{color:var(--err);font-size:.85rem;margin-top:.6rem;min-height:1.2em;padding:.4rem .7rem;border-radius:4px}
+    .auth-error:not(:empty){background:rgba(231,76,60,.08)}
+    .auth-tip{background:rgba(79,142,247,.06);border:1px solid rgba(79,142,247,.2);border-radius:var(--radius);padding:.9rem;margin-bottom:1rem;font-size:.83rem;color:var(--muted);line-height:1.5}
+    .auth-tip code{background:rgba(255,255,255,.06);padding:.1rem .3rem;border-radius:3px;font-family:monospace;color:var(--accent);font-size:.82rem}
+    .auth-divider{text-align:center;color:var(--muted);font-size:.8rem;margin:.9rem 0;position:relative}
+    .auth-divider::before,.auth-divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:var(--border)}
+    .auth-divider::before{left:0}.auth-divider::after{right:0}
+    .wallet-status{display:flex;align-items:center;gap:.5rem;font-size:.83rem;color:var(--muted);margin-bottom:.75rem;padding:.5rem .7rem;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border)}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+    .dot.connected{background:var(--ok)}
 
-    #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    .login-card { background: var(--panel); padding: 2.5rem; border-radius: 10px; width: 340px; }
-    .login-card h2 { margin-bottom: 1.5rem; color: var(--accent); text-align: center; }
-    .field { margin-bottom: 1rem; }
-    .field label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: .3rem; }
-    .field input { width: 100%; padding: .6rem; background: var(--bg); border: 1px solid #2d3244; border-radius: 5px; color: var(--text); font-size: .95rem; }
-    .btn { width: 100%; padding: .7rem; background: var(--accent); border: none; border-radius: 5px; color: #fff; font-size: 1rem; cursor: pointer; margin-top: .5rem; }
-    .btn:hover { opacity: .9; }
-    #login-error { color: var(--err); font-size: .85rem; margin-top: .5rem; min-height: 1.2em; }
+    /* ── App shell ── */
+    #app{display:none}
+    header{background:var(--panel);padding:.8rem 1.5rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+    .header-brand{display:flex;align-items:center;gap:.6rem;font-size:1rem;font-weight:700;color:var(--accent)}
+    .header-user{display:flex;align-items:center;gap:.75rem;font-size:.85rem}
+    .user-badge{background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:.25rem .75rem;color:var(--muted)}
+    .role-chip{padding:.2rem .6rem;border-radius:10px;font-size:.75rem;font-weight:700}
+    .role-chip.admin{background:#1d3461;color:#7eb3ff}
+    .role-chip.operator{background:#1d3428;color:#7effa3}
+    .role-chip.viewer{background:#2d2d2d;color:var(--muted)}
+    .btn-sm{padding:.3rem .8rem;font-size:.8rem;border:none;border-radius:6px;cursor:pointer}
+    .btn-danger{background:rgba(231,76,60,.15);color:var(--err);border:1px solid rgba(231,76,60,.3)}
+    .btn-danger:hover{background:var(--err);color:#fff}
 
-    #dashboard { display: none; }
-    nav { display: flex; gap: 1rem; padding: 1rem 2rem; background: var(--panel); border-bottom: 1px solid #2d3244; }
-    nav button { background: none; border: none; color: var(--muted); cursor: pointer; padding: .4rem .8rem; border-radius: 5px; font-size: .9rem; }
-    nav button.active { background: var(--accent); color: #fff; }
+    /* ── Sidebar nav ── */
+    .layout{display:flex;min-height:calc(100vh - 57px)}
+    aside{width:220px;background:var(--panel);border-right:1px solid var(--border);flex-shrink:0;padding:1rem 0}
+    .nav-section{font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.5rem 1.2rem;margin-top:.5rem}
+    .nav-item{display:flex;align-items:center;gap:.6rem;padding:.65rem 1.2rem;color:var(--muted);cursor:pointer;font-size:.88rem;font-weight:500;transition:all .15s;border-left:3px solid transparent}
+    .nav-item:hover{background:rgba(79,142,247,.06);color:var(--text)}
+    .nav-item.active{background:rgba(79,142,247,.1);color:var(--accent);border-left-color:var(--accent)}
+    .nav-icon{font-size:1rem;width:20px;text-align:center}
 
-    .page { display: none; padding: 2rem; }
-    .page.active { display: block; }
+    /* ── Main content ── */
+    main{flex:1;padding:1.5rem;overflow-y:auto;min-width:0}
+    .page{display:none}.page.active{display:block}
+    .page-title{font-size:1.25rem;font-weight:700;margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem}
+    .page-title small{font-size:.8rem;font-weight:400;color:var(--muted);margin-left:.5rem}
 
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-    .stat-card { background: var(--panel); border-radius: 8px; padding: 1.2rem; }
-    .stat-card .label { font-size: .8rem; color: var(--muted); }
-    .stat-card .value { font-size: 2rem; font-weight: 700; color: var(--accent); margin-top: .3rem; }
+    /* ── Stats ── */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem}
+    .stat-card{background:var(--panel);border-radius:var(--radius);padding:1.2rem;border:1px solid var(--border)}
+    .stat-card .label{font-size:.78rem;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+    .stat-card .value{font-size:2rem;font-weight:800;color:var(--accent);margin-top:.3rem}
+    .stat-card .change{font-size:.78rem;color:var(--ok);margin-top:.2rem}
 
-    table { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: 8px; overflow: hidden; }
-    thead tr { background: #1e2130; }
-    th, td { padding: .75rem 1rem; text-align: left; font-size: .9rem; border-bottom: 1px solid #2d3244; }
-    th { color: var(--muted); font-weight: 600; }
-    tr:last-child td { border-bottom: none; }
-    .badge { display: inline-block; padding: .2rem .5rem; border-radius: 4px; font-size: .75rem; font-weight: 600; }
-    .badge.ingress { background: #1d3461; color: #7eb3ff; }
-    .badge.relay   { background: #1d3428; color: #7effa3; }
-    .badge.egress  { background: #3d1d1d; color: #ff7e7e; }
-    .badge.active  { background: #1d3428; color: var(--ok); }
-    .badge.terminated { background: #3d1d1d; color: var(--err); }
+    /* ── Tables ── */
+    .table-wrap{background:var(--panel);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
+    table{width:100%;border-collapse:collapse}
+    thead tr{background:var(--panel2)}
+    th,td{padding:.7rem 1rem;text-align:left;font-size:.87rem;border-bottom:1px solid var(--border)}
+    th{color:var(--muted);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em}
+    tr:last-child td{border-bottom:none}
+    tbody tr:hover{background:rgba(255,255,255,.02)}
+    .badge{display:inline-block;padding:.2rem .55rem;border-radius:20px;font-size:.72rem;font-weight:700}
+    .badge.ingress{background:#1d3461;color:#7eb3ff}
+    .badge.relay{background:#1d3428;color:#7effa3}
+    .badge.egress{background:#3d1d1d;color:#ff7e7e}
+    .badge.active{background:#1d3428;color:var(--ok)}
+    .badge.pending{background:#3d341d;color:var(--warn)}
+    .badge.terminated,.badge.offline{background:#3d1d1d;color:var(--err)}
+    .badge.allow{background:#1d3428;color:var(--ok)}
+    .badge.deny{background:#3d1d1d;color:var(--err)}
+    .badge.rate-limit{background:#3d341d;color:var(--warn)}
+    .badge.viewer{background:#2d2d2d;color:var(--muted)}
+    .badge.wallet{background:#2d1d3d;color:#c084fc}
+    .badge.sha256_key{background:#1d2d3d;color:#60a5fa}
+    .badge.guest{background:#2d2d2d;color:var(--muted)}
+    .badge.password{background:#1d2d1d;color:#86efac}
 
-    .toolbar { display: flex; gap: .75rem; margin-bottom: 1rem; align-items: center; }
-    .toolbar input, .toolbar select { background: var(--panel); border: 1px solid #2d3244; border-radius: 5px; color: var(--text); padding: .4rem .7rem; font-size: .85rem; }
-    .toolbar button { padding: .4rem .9rem; background: var(--accent); border: none; border-radius: 5px; color: #fff; cursor: pointer; font-size: .85rem; }
+    /* ── Toolbar & forms ── */
+    .toolbar{display:flex;gap:.6rem;margin-bottom:1rem;align-items:center;flex-wrap:wrap}
+    .toolbar input,.toolbar select{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:.4rem .7rem;font-size:.84rem}
+    .toolbar input:focus,.toolbar select:focus{outline:none;border-color:var(--accent)}
+    .btn-action{padding:.4rem .9rem;background:var(--accent);border:none;border-radius:var(--radius);color:#fff;cursor:pointer;font-size:.84rem;font-weight:600}
+    .btn-action:hover{opacity:.88}
+    .btn-del{padding:.3rem .7rem;background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.25);border-radius:5px;color:var(--err);cursor:pointer;font-size:.8rem}
+    .btn-del:hover{background:var(--err);color:#fff}
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center}
+    .modal-overlay.open{display:flex}
+    .modal{background:var(--panel);border-radius:12px;border:1px solid var(--border);padding:1.5rem;width:min(480px,94vw);max-height:90vh;overflow-y:auto}
+    .modal h3{font-size:1.05rem;margin-bottom:1rem;color:var(--accent)}
+    .modal .field input,.modal .field select,.modal .field textarea{width:100%;padding:.6rem .8rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:.9rem;resize:vertical}
+    .modal .field textarea{font-family:monospace}
+    .modal .field input:focus,.modal .field select:focus,.modal .field textarea:focus{outline:none;border-color:var(--accent)}
+    .modal-footer{display:flex;gap:.6rem;margin-top:1.25rem;justify-content:flex-end}
+    .alert{padding:.6rem 1rem;border-radius:var(--radius);margin-bottom:.75rem;font-size:.87rem}
+    .alert.success{background:rgba(46,204,113,.1);color:var(--ok);border:1px solid rgba(46,204,113,.2)}
+    .alert.error{background:rgba(231,76,60,.1);color:var(--err);border:1px solid rgba(231,76,60,.2)}
+    .alert.info{background:rgba(79,142,247,.1);color:var(--accent);border:1px solid rgba(79,142,247,.2)}
 
-    form.panel-form { background: var(--panel); padding: 1.5rem; border-radius: 8px; max-width: 480px; margin-bottom: 2rem; }
-    form.panel-form h3 { margin-bottom: 1rem; color: var(--accent); }
-    form.panel-form .field input, form.panel-form .field select { width: 100%; }
-    .alert { padding: .6rem 1rem; border-radius: 5px; margin-bottom: 1rem; font-size: .9rem; }
-    .alert.success { background: #1d3428; color: var(--ok); }
-    .alert.error   { background: #3d1d1d; color: var(--err); }
+    /* ── JWT Creator ── */
+    .jwt-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    @media(max-width:700px){.jwt-grid{grid-template-columns:1fr}}
+    .jwt-box{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem}
+    .jwt-box h3{font-size:.92rem;font-weight:700;margin-bottom:.85rem;color:var(--accent)}
+    .jwt-token-output{font-family:monospace;font-size:.78rem;word-break:break-all;padding:.75rem;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--ok);line-height:1.4;min-height:80px;position:relative}
+    .jwt-token-output .jwt-part-header{color:#f6851b}
+    .jwt-token-output .jwt-part-payload{color:#4f8ef7}
+    .jwt-token-output .jwt-part-sig{color:#c084fc}
+    .jwt-claims{font-family:monospace;font-size:.8rem;padding:.75rem;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);min-height:120px;white-space:pre-wrap;word-break:break-word}
+    .tips-list{list-style:none;display:flex;flex-direction:column;gap:.6rem}
+    .tips-list li{display:flex;gap:.6rem;font-size:.83rem;color:var(--muted);line-height:1.45}
+    .tips-list li::before{content:'💡';flex-shrink:0}
+    .copy-btn{position:absolute;top:.4rem;right:.4rem;padding:.2rem .5rem;font-size:.72rem;background:var(--panel2);border:1px solid var(--border);border-radius:4px;color:var(--muted);cursor:pointer}
+    .copy-btn:hover{color:var(--text)}
+    .jwt-alg-badge{display:inline-block;padding:.15rem .5rem;border-radius:10px;font-size:.72rem;font-weight:700;background:#1d3461;color:#7eb3ff;margin-left:.4rem}
+
+    /* ── Audit log ── */
+    .audit-row td{font-size:.82rem}
+    .audit-row.failure td{color:var(--err)}
+    .audit-row.success td{color:var(--text)}
+
+    /* ── Planning page ── */
+    .plan-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem}
+    .plan-card h3{font-size:.95rem;font-weight:700;color:var(--accent);margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem}
+    .plan-card p,.plan-card li{font-size:.85rem;color:var(--muted);line-height:1.55}
+    .plan-card ul{padding-left:1.2rem;display:flex;flex-direction:column;gap:.3rem}
+    .phase-badge{font-size:.72rem;font-weight:700;padding:.15rem .5rem;border-radius:10px;background:rgba(79,142,247,.15);color:var(--accent)}
+
+    /* ── Responsive ── */
+    @media(max-width:600px){aside{display:none}.layout{flex-direction:column}}
   </style>
 </head>
 <body>
 
-<!-- ── Login ── -->
-<div id="login-screen">
-  <div class="login-card">
-    <h2>🔒 Proxy Circuit</h2>
-    <div class="field">
-      <label for="username">Username</label>
-      <input id="username" type="text" placeholder="admin" autocomplete="username"/>
+<!-- ═══════════════════════════════ AUTH SCREEN ═══════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-card-header">
+      <div class="auth-logo">⚡</div>
+      <h1>Proxy Circuit</h1>
+      <p>Control Plane — Choose how to sign in</p>
     </div>
-    <div class="field">
-      <label for="password">Password</label>
-      <input id="password" type="password" placeholder="••••••••" autocomplete="current-password"/>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="password">🔐 Password</button>
+      <button class="auth-tab" data-tab="sha256">🔑 SHA-256 Key</button>
+      <button class="auth-tab" data-tab="wallet">🦊 Wallet</button>
+      <button class="auth-tab" data-tab="guest">👁 Guest</button>
     </div>
-    <button class="btn" id="login-btn">Sign in</button>
-    <div id="login-error"></div>
+    <div class="auth-body">
+      <!-- Password -->
+      <div class="auth-panel active" id="tab-password">
+        <div class="field">
+          <label>Username</label>
+          <input id="pw-username" type="text" placeholder="admin" autocomplete="username"/>
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input id="pw-password" type="password" placeholder="••••••••" autocomplete="current-password"/>
+        </div>
+        <button class="btn btn-primary" id="btn-login-pw">Sign in</button>
+        <div class="auth-error" id="err-pw"></div>
+      </div>
+
+      <!-- SHA-256 Key -->
+      <div class="auth-panel" id="tab-sha256">
+        <div class="auth-tip">
+          Your account is authenticated with a <code>SHA-256</code> key.<br/>
+          Enter your <strong>username</strong> and the <strong>secret key string</strong> (it will be hashed locally) — or paste the 64-char hex hash directly.
+        </div>
+        <div class="field">
+          <label>Username</label>
+          <input id="sha-username" type="text" placeholder="operator" autocomplete="username"/>
+        </div>
+        <div class="field">
+          <label>Secret key (plaintext or 64-char hex)</label>
+          <input id="sha-key" type="password" placeholder="mysha256key" autocomplete="off"/>
+          <small>Default demo key: <code>mysha256key</code></small>
+        </div>
+        <button class="btn btn-primary" id="btn-login-sha">Sign in with SHA-256 key</button>
+        <div class="auth-error" id="err-sha"></div>
+      </div>
+
+      <!-- Wallet -->
+      <div class="auth-panel" id="tab-wallet">
+        <div class="auth-tip">
+          Sign in using your <strong>Ethereum wallet</strong> (MetaMask or any EIP-1193 provider).<br/>
+          You'll sign a one-time challenge message — no gas, no transaction.
+        </div>
+        <div class="wallet-status" id="wallet-status">
+          <span class="dot" id="wallet-dot"></span>
+          <span id="wallet-addr-label">No wallet detected</span>
+        </div>
+        <button class="btn btn-wallet" id="btn-connect-wallet">Connect Wallet</button>
+        <div class="auth-divider" id="wallet-sign-section" style="display:none"></div>
+        <button class="btn btn-secondary" id="btn-login-wallet" style="display:none">Sign challenge &amp; login</button>
+        <div class="auth-error" id="err-wallet"></div>
+      </div>
+
+      <!-- Guest -->
+      <div class="auth-panel" id="tab-guest">
+        <div class="auth-tip">
+          Guest access gives you <strong>read-only viewer</strong> access to public circuit status.<br/>
+          No credentials required. Token expires in 2 hours.
+        </div>
+        <button class="btn btn-guest" id="btn-login-guest">Continue as guest</button>
+        <div class="auth-error" id="err-guest"></div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- ── Dashboard ── -->
-<div id="dashboard">
+<!-- ═══════════════════════════════ MAIN APP ═════════════════════════════════ -->
+<div id="app">
   <header>
-    <h1>⚡ Proxy Circuit — Control Plane</h1>
-    <div>
-      <span id="user-info"></span>
-      <button id="logout-btn">Logout</button>
+    <div class="header-brand">⚡ <span>Proxy Circuit</span></div>
+    <div class="header-user">
+      <span class="user-badge" id="hdr-username"></span>
+      <span class="role-chip" id="hdr-role"></span>
+      <button class="btn-sm btn-danger" id="btn-logout">Logout</button>
     </div>
   </header>
 
-  <nav>
-    <button class="active" data-page="overview">Overview</button>
-    <button data-page="nodes">Nodes</button>
-    <button data-page="sessions">Sessions</button>
-    <button data-page="policies">Policies</button>
-  </nav>
+  <div class="layout">
+    <aside>
+      <div class="nav-section">Overview</div>
+      <div class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span>Dashboard</div>
 
-  <!-- Overview -->
-  <div class="page active" id="page-overview">
-    <div class="stats-grid">
-      <div class="stat-card"><div class="label">Nodes</div><div class="value" id="stat-nodes">—</div></div>
-      <div class="stat-card"><div class="label">Active Sessions</div><div class="value" id="stat-sessions">—</div></div>
-      <div class="stat-card"><div class="label">Policies</div><div class="value" id="stat-policies">—</div></div>
-    </div>
-    <table id="tbl-nodes-overview">
-      <thead><tr><th>Host</th><th>Port</th><th>Role</th><th>Status</th><th>Region</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
+      <div class="nav-section">Network</div>
+      <div class="nav-item" data-page="nodes"><span class="nav-icon">🖥</span>Nodes</div>
+      <div class="nav-item" data-page="sessions"><span class="nav-icon">🔗</span>Sessions</div>
+      <div class="nav-item" data-page="policies"><span class="nav-icon">🛡</span>Policies</div>
 
-  <!-- Nodes -->
-  <div class="page" id="page-nodes">
-    <form class="panel-form" id="form-add-node">
-      <h3>Register Node</h3>
-      <div id="node-alert"></div>
-      <div class="field"><label>Host</label><input name="host" placeholder="10.0.0.1" required/></div>
-      <div class="field"><label>Port</label><input name="port" type="number" value="1080" required/></div>
-      <div class="field"><label>Role</label>
-        <select name="role">
-          <option value="ingress">Ingress</option>
-          <option value="relay">Relay</option>
-          <option value="egress">Egress</option>
-        </select>
+      <div class="nav-section">Tools</div>
+      <div class="nav-item" data-page="jwt-creator"><span class="nav-icon">🔧</span>JWT Creator</div>
+      <div class="nav-item" data-page="audit"><span class="nav-icon">📋</span>Audit Log</div>
+      <div class="nav-item" data-page="planning"><span class="nav-icon">🗺</span>Planning</div>
+    </aside>
+
+    <main>
+      <!-- Dashboard -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-title">📊 Dashboard <small>Circuit health overview</small></div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="label">Total Nodes</div><div class="value" id="stat-nodes">—</div><div class="change">Active relay circuit</div></div>
+          <div class="stat-card"><div class="label">Active Sessions</div><div class="value" id="stat-sessions">—</div><div class="change">Live connections</div></div>
+          <div class="stat-card"><div class="label">Policies</div><div class="value" id="stat-policies">—</div><div class="change">ACL rules loaded</div></div>
+          <div class="stat-card"><div class="label">Audit Events</div><div class="value" id="stat-audit">—</div><div class="change">Last 24h</div></div>
+        </div>
+        <div id="dash-alert"></div>
+        <div class="table-wrap" id="recent-nodes-wrap">
+          <table id="recent-nodes"><thead><tr><th>Host</th><th>Role</th><th>Region</th><th>Status</th></tr></thead><tbody></tbody></table>
+        </div>
       </div>
-      <div class="field"><label>Region (optional)</label><input name="region" placeholder="eu-west"/></div>
-      <button type="submit" class="btn">Add Node</button>
-    </form>
-    <table id="tbl-nodes">
-      <thead><tr><th>ID</th><th>Host</th><th>Port</th><th>Role</th><th>Status</th><th>Region</th><th>Action</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
 
-  <!-- Sessions -->
-  <div class="page" id="page-sessions">
-    <div class="toolbar">
-      <input id="session-filter" placeholder="Filter by dst host…"/>
-      <button id="refresh-sessions">↻ Refresh</button>
-    </div>
-    <table id="tbl-sessions">
-      <thead><tr><th>ID</th><th>Src IP</th><th>Dst Host</th><th>Dst Port</th><th>Bytes Sent</th><th>Bytes Recv</th><th>Status</th><th>Action</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <!-- Policies -->
-  <div class="page" id="page-policies">
-    <form class="panel-form" id="form-add-policy">
-      <h3>Add Policy Rule</h3>
-      <div id="policy-alert"></div>
-      <div class="field"><label>Priority (lower = first)</label><input name="priority" type="number" value="100"/></div>
-      <div class="field"><label>Src IP Prefix (CIDR, optional)</label><input name="srcIpPrefix" placeholder="10.0.0.0/8"/></div>
-      <div class="field"><label>Dst Host Glob (optional)</label><input name="dstHostGlob" placeholder="*.example.com"/></div>
-      <div class="field"><label>Dst Ports (comma-separated, optional)</label><input name="dstPorts" placeholder="80,443"/></div>
-      <div class="field"><label>Verdict</label>
-        <select name="verdict">
-          <option value="allow">Allow</option>
-          <option value="deny">Deny</option>
-          <option value="log">Log</option>
-        </select>
+      <!-- Nodes -->
+      <div class="page" id="page-nodes">
+        <div class="page-title">🖥 Nodes <small>Relay circuit topology</small></div>
+        <div id="nodes-alert"></div>
+        <div class="toolbar">
+          <button class="btn-action" id="btn-add-node">+ Add Node</button>
+          <button class="btn-action" style="background:var(--panel2);color:var(--muted);border:1px solid var(--border)" id="btn-refresh-nodes">↻ Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Host</th><th>Port</th><th>Role</th><th>Region</th><th>Status</th><th>Created</th><th></th></tr></thead>
+          <tbody id="nodes-body"></tbody></table>
+        </div>
       </div>
-      <div class="field"><label>Description</label><input name="description" placeholder="Optional note"/></div>
-      <button type="submit" class="btn">Add Rule</button>
-    </form>
-    <table id="tbl-policies">
-      <thead><tr><th>Priority</th><th>Src Prefix</th><th>Dst Host</th><th>Ports</th><th>Verdict</th><th>Description</th><th>Action</th></tr></thead>
-      <tbody></tbody>
-    </table>
+
+      <!-- Sessions -->
+      <div class="page" id="page-sessions">
+        <div class="page-title">🔗 Sessions <small>Active proxy connections</small></div>
+        <div class="table-wrap">
+          <table><thead><tr><th>ID</th><th>Client IP</th><th>Destination</th><th>Status</th><th>Started</th><th></th></tr></thead>
+          <tbody id="sessions-body"></tbody></table>
+        </div>
+      </div>
+
+      <!-- Policies -->
+      <div class="page" id="page-policies">
+        <div class="page-title">🛡 Policies <small>ACL and routing rules</small></div>
+        <div id="policies-alert"></div>
+        <div class="toolbar"><button class="btn-action" id="btn-add-policy">+ Add Policy</button></div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Name</th><th>Action</th><th>Priority</th><th>Src CIDR</th><th>Dst Host</th><th>Enabled</th><th></th></tr></thead>
+          <tbody id="policies-body"></tbody></table>
+        </div>
+      </div>
+
+      <!-- JWT Creator -->
+      <div class="page" id="page-jwt-creator">
+        <div class="page-title">🔧 JWT Creator <small>Build &amp; inspect JSON Web Tokens</small></div>
+        <div class="jwt-grid">
+          <!-- Create token -->
+          <div>
+            <div class="jwt-box">
+              <h3>✏️ Create Token <span class="jwt-alg-badge">HS256</span></h3>
+              <div class="field"><label>Secret (HS256)</label><input id="jwt-secret" type="password" placeholder="your-secret-key" value="dev-secret-change-me"/></div>
+              <div class="field"><label>Subject (sub)</label><input id="jwt-sub" type="text" placeholder="user123"/></div>
+              <div class="field"><label>Audience (aud)</label><input id="jwt-aud" type="text" placeholder="proxy-circuit"/></div>
+              <div class="field"><label>Expires in</label>
+                <select id="jwt-exp">
+                  <option value="3600">1 hour</option>
+                  <option value="28800" selected>8 hours</option>
+                  <option value="86400">24 hours</option>
+                  <option value="604800">7 days</option>
+                  <option value="0">Never</option>
+                </select>
+              </div>
+              <div class="field"><label>Extra claims (JSON)</label><textarea id="jwt-extra" rows="3" placeholder='{"role":"admin","env":"prod"}'></textarea></div>
+              <button class="btn btn-primary" id="btn-jwt-create">Generate Token</button>
+              <div id="jwt-create-alert" style="margin-top:.5rem"></div>
+            </div>
+            <div class="jwt-box" style="margin-top:1rem">
+              <h3>🔍 Decoded output</h3>
+              <div class="jwt-claims" id="jwt-decoded">—</div>
+            </div>
+          </div>
+
+          <!-- Right column: output + tips + decoder -->
+          <div>
+            <div class="jwt-box">
+              <h3>📋 Token output</h3>
+              <div class="jwt-token-output" id="jwt-output" style="position:relative">
+                <em style="color:var(--muted)">Token will appear here…</em>
+                <button class="copy-btn" id="btn-jwt-copy">Copy</button>
+              </div>
+            </div>
+            <div class="jwt-box" style="margin-top:1rem">
+              <h3>🔍 Decode / verify token</h3>
+              <div class="field"><textarea id="jwt-decode-input" rows="4" placeholder="Paste a JWT here…"></textarea></div>
+              <div class="field"><label>Secret (optional – for verification)</label><input id="jwt-decode-secret" type="password" placeholder="leave empty to decode only"/></div>
+              <button class="btn btn-secondary" id="btn-jwt-decode">Decode</button>
+              <div class="jwt-claims" id="jwt-decode-result" style="margin-top:.75rem">—</div>
+            </div>
+            <div class="jwt-box" style="margin-top:1rem">
+              <h3>💡 JWT Tips</h3>
+              <ul class="tips-list">
+                <li>Never expose your signing <strong>secret</strong> in client-side code or logs.</li>
+                <li>Always set an expiry (<code>exp</code>). Short-lived tokens (≤8h) reduce blast radius on theft.</li>
+                <li>Store tokens in <code>httpOnly</code> cookies or memory — not <code>localStorage</code> — to prevent XSS exfil.</li>
+                <li>Always verify the <code>alg</code> header server-side; reject <code>alg: none</code> unconditionally.</li>
+                <li>Include the minimum required claims; never embed sensitive PII in the payload (it's only base64, not encrypted).</li>
+                <li>Use short-form claim names (<code>sub</code>, <code>iss</code>, <code>aud</code>) per RFC 7519 for interoperability.</li>
+                <li>Rotate secrets regularly and keep an old-key grace period for in-flight tokens.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Audit Log -->
+      <div class="page" id="page-audit">
+        <div class="page-title">📋 Audit Log <small>Persistent event history</small></div>
+        <div class="toolbar"><button class="btn-action" id="btn-refresh-audit">↻ Refresh</button></div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Time</th><th>Event</th><th>Actor</th><th>Target</th><th>Result</th></tr></thead>
+          <tbody id="audit-body"></tbody></table>
+        </div>
+      </div>
+
+      <!-- Planning -->
+      <div class="page" id="page-planning">
+        <div class="page-title">🗺 Implementation Plan <small>Full delivery roadmap</small></div>
+        <div class="plan-card"><h3><span class="phase-badge">Phase 1</span> Scope &amp; Constraints</h3><ul><li>Target: Linux-first; cross-platform C++ via Boost.Asio; Node.js for web app</li><li>Concurrent users: up to 10 000 sessions per relay node (epoll I/O model)</li><li>Latency goal: &lt; 5 ms p99 added overhead per hop</li><li>Compliance: operators must confirm proxy-use is lawful in their jurisdiction</li></ul></div>
+        <div class="plan-card"><h3><span class="phase-badge">Phase 2</span> Repository &amp; Delivery Structure</h3><ul><li>Monorepo: <code>proxy-core/</code>, <code>web-app/</code>, <code>masking-client/</code>, <code>shared-security/</code>, <code>deploy/</code>, <code>docs/</code></li><li>CI: GitHub Actions — build, unit tests, CodeQL, Trivy, npm audit</li><li>CD: GitHub Pages (SPA dashboard), Docker Hub (proxy-core &amp; web-app images)</li><li>Environment profiles: dev (sqlite+local), stage (docker-compose), prod (Kubernetes/Nomad)</li></ul></div>
+        <div class="plan-card"><h3><span class="phase-badge">Phase 3</span> Premium Architecture</h3><ul><li>Layered circuit: Ingress Gateway → Relay Nodes → Egress Node → Policy Engine</li><li>mTLS with short-lived leaf certs between every hop (shared-security library)</li><li>Observability: Prometheus metrics, structured JSON logs, OpenTelemetry traces</li><li>Multi-tenant: per-tenant routing tables, quota policies, isolated egress pools</li></ul></div>
+        <div class="plan-card"><h3><span class="phase-badge">Phase 4</span> C++ Proxy Core</h3><ul><li>Boost.Asio async I/O with thread-pool (hardware_concurrency threads)</li><li>Protocols: SOCKS5 (RFC 1928), HTTP CONNECT — both on configurable ports</li><li>Bidirectional async relay chains — no blocking reads in hot path</li><li>Policy engine: CIDR ACL, glob destination matching, per-IP rate limiter (token bucket)</li><li>Resilience: exponential backoff reconnect, relay failover, graceful shutdown</li></ul></div>
+        <div class="plan-card"><h3><span class="phase-badge">Phase 5</span> Secure Network Layer</h3><ul><li>E2E encryption: TLS 1.3-only, AES-256-GCM data plane, ECDHE key exchange</li><li>Cert lifecycle: CA signing, SAN-bearing leaf certs, automated rotation + revocation</li><li>Network hardening: iptables isolation, minimal port exposure, non-root containers</li><li>DDoS mitigation: nginx rate limiting, connection throttling at ingress</li></ul></div>
+        <div class="plan-card"><h3><span class="phase-badge">Phase 6</span> Web Control Plane</h3><ul><li>Auth: password (bcrypt), SHA-256 key, MetaMask wallet login, guest viewer</li><li>RBAC: viewer &lt; operator &lt; admin — enforced per endpoint</li><li>Persistent SQLite DB: users, nodes, sessions, policies, audit log</li><li>JWT Creator tool with best-practice tips and token decoder/verifier</li><li>GitHub Pages SPA deployment with automated workflow</li></ul></div>
+        <div class="plan-card"><h3><span class="phase-badge">Phase 7</span> Masking Client</h3><ul><li>Lightweight C++ client with INI-based profile switching (standard / strict / region)</li><li>iptables kill-switch chain — auto-cleaned on exit or crash</li><li>Exponential backoff reconnect (2ⁿ seconds, cap 60 s)</li><li>Low footprint: Boost.Asio async event loop, &lt; 10 MB RSS</li></ul></div>
+        <div class="plan-card"><h3><span class="phase-badge">Phase 8–11</span> Security, Testing, Ops &amp; Docs</h3><ul><li>Threat model: MITM, replay, credential theft, traffic correlation mitigations documented</li><li>Test matrix: unit (Catch2 / Jest), integration (supertest), performance (wrk/k6), chaos</li><li>Deployment: reproducible Docker builds, canary roll-out, automated rollback triggers</li><li>Docs: architecture, API spec, security model, operator playbook, onboarding guide</li></ul></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ── Modals ── -->
+<div class="modal-overlay" id="modal-node">
+  <div class="modal">
+    <h3>Add Node</h3>
+    <div class="field"><label>Host / IP</label><input id="n-host" type="text" placeholder="10.0.0.1"/></div>
+    <div class="field"><label>Port</label><input id="n-port" type="number" placeholder="1080" min="1" max="65535"/></div>
+    <div class="field"><label>Role</label><select id="n-role"><option>ingress</option><option>relay</option><option>egress</option></select></div>
+    <div class="field"><label>Region</label><input id="n-region" type="text" placeholder="us-east"/></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btn-node-cancel">Cancel</button>
+      <button class="btn btn-primary" id="btn-node-save">Save</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-policy">
+  <div class="modal">
+    <h3>Add Policy</h3>
+    <div class="field"><label>Name</label><input id="p-name" type="text" placeholder="block-tor-exit"/></div>
+    <div class="field"><label>Action</label><select id="p-action"><option>allow</option><option>deny</option><option>rate-limit</option></select></div>
+    <div class="field"><label>Priority</label><input id="p-priority" type="number" placeholder="0"/></div>
+    <div class="field"><label>Src CIDR</label><input id="p-src" type="text" placeholder="0.0.0.0/0"/></div>
+    <div class="field"><label>Dst Host (glob)</label><input id="p-dst" type="text" placeholder="*.example.com"/></div>
+    <div class="field"><label>Dst Ports (comma)</label><input id="p-ports" type="text" placeholder="80,443"/></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btn-policy-cancel">Cancel</button>
+      <button class="btn btn-primary" id="btn-policy-save">Save</button>
+    </div>
   </div>
 </div>
 

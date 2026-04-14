@@ -4,6 +4,10 @@ module.exports = {
   port:    parseInt(process.env.PORT || '3000', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
 
+  // Number of reverse-proxy hops in front of this service.
+  // Set to 1 when behind nginx, or a trusted subnet string.
+  trustProxy: process.env.TRUST_PROXY || (process.env.NODE_ENV === 'production' ? 1 : false),
+
   jwt: {
     secret:    process.env.JWT_SECRET || (() => {
       if (process.env.NODE_ENV === 'production')
@@ -17,23 +21,4 @@ module.exports = {
     windowMs: 15 * 60 * 1000,  // 15 minutes
     max:      100,              // requests per window per IP
   },
-
-  // In-process user store for demo; replace with a real DB adapter.
-  // Each user MUST have a unique password hash in production.
-  users: [
-    {
-      id:       'u1',
-      username: 'admin',
-      // bcrypt hash of "changeme" – replace immediately in production.
-      passwordHash: '$2a$12$C0Xty8ktgoSyKgK23ilm1.TsCLxtynUF/3rAthjwaMzZDoRo9hGv.',
-      role:     'admin',
-    },
-    {
-      id:       'u2',
-      username: 'operator',
-      // bcrypt hash of "changeme" – replace with a different password in production.
-      passwordHash: '$2a$12$C0Xty8ktgoSyKgK23ilm1.TsCLxtynUF/3rAthjwaMzZDoRo9hGv.',
-      role:     'operator',
-    },
-  ],
 };

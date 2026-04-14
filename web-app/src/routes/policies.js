@@ -1,58 +1,62 @@
 'use strict';
 
 const express = require('express');
-const { v4: uuidv4 }   = require('uuid');
-const { authenticate }  = require('../middleware/auth');
-const { requireRole }   = require('../middleware/rbac');
-const { audit }         = require('../utils/audit');
+const { v4: uuidv4 } = require('uuid');
+const { Policies, AuditLog } = require('../db');
+const { authenticate: requireAuth } = require('../middleware/auth');
+const { requireRole } = require('../middleware/rbac');
 
 const router = express.Router();
-router.use(authenticate);
+router.use(requireAuth);
 
-// In-memory policy store.
-const policies = new Map();
+const VALID_ACTIONS = ['allow', 'deny', 'rate-limit'];
 
-/**
- * GET /api/policies
- */
 router.get('/', requireRole('viewer'), (req, res) => {
-  res.json([...policies.values()].sort((a, b) => a.priority - b.priority));
+  res.json(Policies.list());
 });
 
-/**
- * POST /api/policies
- * Body: { id?, priority, srcIpPrefix?, dstHostGlob?, dstPorts?, verdict }
- */
 router.post('/', requireRole('operator'), (req, res) => {
-  const { priority, verdict } = req.body;
-  if (!Number.isInteger(priority))
-    return res.status(400).json({ error: 'priority must be an integer' });
-  if (!['allow', 'deny', 'log'].includes(verdict))
-    return res.status(400).json({ error: 'verdict must be allow | deny | log' });
+  const { name, action, priority, src_cidr, dst_host, dst_ports } = req.body || {};
+  if (!name) return res.status(400).json({ error: 'name is required' });
+  if (!VALID_ACTIONS.includes(action))
+    return res.status(400).json({ error: 'action must be allow | deny | rate-limit' });
 
-  const policy = {
-    id:           req.body.id || uuidv4(),
-    priority,
-    srcIpPrefix:  req.body.srcIpPrefix  || null,
-    dstHostGlob:  req.body.dstHostGlob  || null,
-    dstPorts:     req.body.dstPorts     || [],
-    verdict,
-    description:  req.body.description  || '',
-    createdAt:    new Date().toISOString(),
+  const p = {
+    id:       uuidv4(),
+    name,
+    action,
+    priority: Number.isInteger(priority) ? priority : 0,
+    src_cidr:  src_cidr  || null,
+    dst_host:  dst_host  || null,
+    dst_ports: dst_ports || null,
+    enabled:   1,
   };
-  policies.set(policy.id, policy);
-  audit('policy.create', req.user.username, policy.id, 'success');
-  res.status(201).json(policy);
+  Policies.create(p);
+  AuditLog.append('policy.create', req.user.username, p.id, 'success');
+  res.status(201).json(Policies.get(p.id));
 });
 
-/**
- * DELETE /api/policies/:id
- */
+router.get('/:id', requireRole('viewer'), (req, res) => {
+  const p = Policies.get(req.params.id);
+  if (!p) return res.status(404).json({ error: 'Policy not found' });
+  res.json(p);
+});
+
+router.patch('/:id', requireRole('operator'), (req, res) => {
+  const p = Policies.get(req.params.id);
+  if (!p) return res.status(404).json({ error: 'Policy not found' });
+  if (req.body.action !== undefined && !VALID_ACTIONS.includes(req.body.action))
+    return res.status(400).json({ error: 'action must be allow | deny | rate-limit' });
+  Policies.update(req.params.id, req.body);
+  AuditLog.append('policy.update', req.user.username, req.params.id, 'success');
+  res.json(Policies.get(req.params.id));
+});
+
 router.delete('/:id', requireRole('admin'), (req, res) => {
-  if (!policies.has(req.params.id))
-    return res.status(404).json({ error: 'Policy not found' });
-  policies.delete(req.params.id);
-  audit('policy.delete', req.user.username, req.params.id, 'success');
+  const p = Policies.get(req.params.id);
+  if (!p) return res.status(404).json({ error: 'Policy not found' });
+  Policies.delete(req.params.id);
+  AuditLog.append('policy.delete', req.user.username, req.params.id, 'success');
   res.status(204).end();
 });
 

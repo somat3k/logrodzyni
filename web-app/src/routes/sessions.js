@@ -1,78 +1,43 @@
 'use strict';
 
 const express = require('express');
-const { v4: uuidv4 }   = require('uuid');
-const { authenticate }  = require('../middleware/auth');
-const { requireRole }   = require('../middleware/rbac');
+const { v4: uuidv4 } = require('uuid');
+const { Sessions, AuditLog } = require('../db');
+const { authenticate: requireAuth } = require('../middleware/auth');
+const { requireRole } = require('../middleware/rbac');
 
 const router = express.Router();
-router.use(authenticate);
+router.use(requireAuth);
 
-// In-memory session store.
-const sessions = new Map();
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-// Simulate a live session list for demonstration.
-function buildSessionEntry(overrides = {}) {
-  return {
-    id:         uuidv4(),
-    nodeId:     overrides.nodeId   || null,
-    srcIp:      overrides.srcIp    || '0.0.0.0',
-    dstHost:    overrides.dstHost  || 'unknown',
-    dstPort:    overrides.dstPort  || 0,
-    bytesSent:  overrides.bytesSent || 0,
-    bytesRecv:  overrides.bytesRecv || 0,
-    startedAt:  new Date().toISOString(),
-    status:     'active',
-  };
-}
-
-// ── Routes ────────────────────────────────────────────────────────────────────
-
-/**
- * GET /api/sessions
- * Returns active sessions.
- */
-router.get('/', requireRole('viewer'), (req, res) => {
-  let list = [...sessions.values()];
-
-  // Optional filters.
-  if (req.query.nodeId) list = list.filter(s => s.nodeId === req.query.nodeId);
-  if (req.query.status) list = list.filter(s => s.status === req.query.status);
-
-  res.json(list);
+router.get('/',  requireRole('viewer'), (req, res) => {
+  res.json(Sessions.list());
 });
 
-/**
- * GET /api/sessions/:id
- */
-router.get('/:id', requireRole('viewer'), (req, res) => {
-  const sess = sessions.get(req.params.id);
-  if (!sess) return res.status(404).json({ error: 'Session not found' });
-  res.json(sess);
-});
-
-/**
- * POST /api/sessions  (internal: proxy nodes report new sessions)
- * Requires operator role.
- */
 router.post('/', requireRole('operator'), (req, res) => {
-  const sess = buildSessionEntry(req.body);
-  sessions.set(sess.id, sess);
-  res.status(201).json(sess);
+  const s = {
+    id:          uuidv4(),
+    client_ip:   req.body.client_ip   || req.ip,
+    destination: req.body.destination || '',
+    status:      'active',
+    node_id:     req.body.node_id     || null,
+  };
+  Sessions.create(s);
+  AuditLog.append('session.create', req.user.username, s.id, 'success');
+  res.status(201).json(Sessions.get(s.id));
 });
 
-/**
- * DELETE /api/sessions/:id  (terminate a session)
- * Requires operator role.
- */
-router.delete('/:id', requireRole('operator'), (req, res) => {
-  const sess = sessions.get(req.params.id);
-  if (!sess) return res.status(404).json({ error: 'Session not found' });
-  sess.status    = 'terminated';
-  sess.endedAt   = new Date().toISOString();
-  res.json(sess);
+router.get('/:id', requireRole('viewer'), (req, res) => {
+  const s = Sessions.get(req.params.id);
+  if (!s) return res.status(404).json({ error: 'Session not found' });
+  res.json(s);
+});
+
+router.delete('/:id', requireRole('admin'), (req, res) => {
+  const s = Sessions.get(req.params.id);
+  if (!s) return res.status(404).json({ error: 'Session not found' });
+  Sessions.update(req.params.id, { status: 'terminated', ended_at: new Date().toISOString() });
+  AuditLog.append('session.terminate', req.user.username, req.params.id, 'success');
+  res.status(204).end();
 });
 
 module.exports = router;

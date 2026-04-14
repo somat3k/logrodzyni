@@ -14,12 +14,27 @@ const authRouter     = require('./routes/auth');
 const nodesRouter    = require('./routes/nodes');
 const sessionsRouter = require('./routes/sessions');
 const policiesRouter = require('./routes/policies');
+const auditRouter    = require('./routes/audit');
 
 const app = express();
 
+// ── Trust reverse-proxy (nginx) so req.ip / rate-limit see real client IP ────
+if (config.trustProxy) app.set('trust proxy', config.trustProxy);
+
 // ── Security middleware ───────────────────────────────────────────────────────
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc:  ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
+      connectSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+      styleSrc:   ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc:    ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc:     ["'self'", 'data:'],
+    },
+  },
+}));
 app.use(compression());
 app.disable('x-powered-by');
 
@@ -57,6 +72,7 @@ app.use('/api/auth',     authRouter);
 app.use('/api/nodes',    nodesRouter);
 app.use('/api/sessions', sessionsRouter);
 app.use('/api/policies', policiesRouter);
+app.use('/api/audit',    auditRouter);
 
 // Health / liveness probe.
 app.get('/healthz', (req, res) => res.json({ status: 'ok' }));

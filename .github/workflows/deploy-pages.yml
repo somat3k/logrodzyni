@@ -1,0 +1,60 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web-app/public/**'
+      - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy SPA
+    runs-on: ubuntu-22.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare static assets
+        run: |
+          # Copy the SPA dashboard into a standalone _site/ directory.
+          # The SPA makes API calls back to the control-plane server,
+          # so we inject the server URL as a JS config constant.
+          mkdir -p _site
+          cp web-app/public/index.html _site/index.html
+          cp web-app/public/app.js     _site/app.js
+
+          # Inject API base URL (override /api prefix for cross-origin requests
+          # when hosted on GitHub Pages but API is on a separate server).
+          echo "window.__API_BASE__ = '${API_BASE_URL:-}';" > _site/config.js
+
+          # Add a simple 404 redirect for SPA routing
+          cp _site/index.html _site/404.html
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
