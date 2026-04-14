@@ -1,0 +1,42 @@
+FROM ubuntu:22.04 AS builder
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential cmake ninja-build git \
+        libboost-system-dev libssl-dev \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+COPY shared-security/ ./shared-security/
+COPY proxy-core/      ./proxy-core/
+
+RUN cmake -S proxy-core -B proxy-core/build \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_TESTS=OFF \
+        -G Ninja \
+    && cmake --build proxy-core/build --parallel
+
+# ── Runtime image ─────────────────────────────────────────────────────────────
+FROM ubuntu:22.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libssl3 libboost-system1.74.0 ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -r -s /sbin/nologin proxy
+
+COPY --from=builder /src/proxy-core/build/proxy-core /usr/local/bin/proxy-core
+RUN chmod 755 /usr/local/bin/proxy-core
+
+RUN mkdir -p /etc/proxy-core/certs && chown -R proxy /etc/proxy-core
+
+USER proxy
+EXPOSE 1080 8080 9090
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD nc -z localhost 1080 || exit 1
+
+ENTRYPOINT ["proxy-core"]
+CMD ["/etc/proxy-core/proxy.conf"]

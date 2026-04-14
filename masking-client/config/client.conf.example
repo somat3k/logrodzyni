@@ -1,0 +1,26 @@
+# Masking client configuration
+# Default location: ~/.config/masking-client/client.conf
+
+# Name of the profile to use on startup.
+active = standard
+
+# ── Profile: standard ────────────────────────────────────────────────────────
+[standard]
+proxy_host  = 127.0.0.1
+proxy_port  = 1080
+use_tls     = false
+region      =
+
+# ── Profile: strict ───────────────────────────────────────────────────────────
+[strict]
+proxy_host  = ingress.example.com
+proxy_port  = 1080
+use_tls     = true
+region      =
+
+# ── Profile: region-eu ────────────────────────────────────────────────────────
+[region-eu]
+proxy_host  = eu-ingress.example.com
+proxy_port  = 1080
+use_tls     = true
+region      = eu

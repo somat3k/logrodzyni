@@ -1,0 +1,39 @@
+# proxy-core configuration example
+# Copy to /etc/proxy-core/proxy.conf and adjust to your environment.
+
+# ── Listener ──────────────────────────────────────────────────────────────────
+listen_host     = 0.0.0.0
+listen_port     = 1080    # SOCKS5
+
+# HTTP CONNECT proxy (set to 0 to disable)
+http_port       = 8080
+
+# Internal control endpoint (metrics / health)
+control_host    = 127.0.0.1
+control_port    = 9090
+
+# ── TLS (inter-node links) ────────────────────────────────────────────────────
+tls_cert_file   = /etc/proxy-core/certs/node.crt
+tls_key_file    = /etc/proxy-core/certs/node.key
+tls_ca_file     = /etc/proxy-core/certs/ca.crt
+mutual_tls      = true
+
+# ── Limits ────────────────────────────────────────────────────────────────────
+max_connections  = 10000
+thread_pool_size = 0        # 0 = auto (hardware_concurrency)
+connect_timeout  = 10       # seconds
+idle_timeout     = 300      # seconds
+handshake_timeout = 15      # seconds
+rate_limit_cps   = 50       # new connections per second per source IP
+
+# ── Circuit topology ──────────────────────────────────────────────────────────
+# Role of this node: ingress | relay | egress
+node_role        = ingress
+
+# Address of the next hop (relay or egress). Leave empty for egress nodes.
+next_hop_host    =
+next_hop_port    = 0
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+log_level        = info     # debug | info | warn | error
+log_file         =          # empty = stderr

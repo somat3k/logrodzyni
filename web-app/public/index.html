@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Proxy Circuit — Control Plane</title>
+  <style>
+    :root {
+      --bg:    #0f1117;
+      --panel: #1a1d26;
+      --accent:#4f8ef7;
+      --ok:    #2ecc71;
+      --warn:  #f39c12;
+      --err:   #e74c3c;
+      --text:  #e2e8f0;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    header { background: var(--panel); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2d3244; }
+    header h1 { font-size: 1.2rem; color: var(--accent); }
+    #user-info { font-size: .85rem; color: var(--muted); }
+    #logout-btn { margin-left: 1rem; padding: .3rem .8rem; background: var(--err); border: none; border-radius: 4px; color: #fff; cursor: pointer; font-size: .8rem; }
+
+    #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-card { background: var(--panel); padding: 2.5rem; border-radius: 10px; width: 340px; }
+    .login-card h2 { margin-bottom: 1.5rem; color: var(--accent); text-align: center; }
+    .field { margin-bottom: 1rem; }
+    .field label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: .3rem; }
+    .field input { width: 100%; padding: .6rem; background: var(--bg); border: 1px solid #2d3244; border-radius: 5px; color: var(--text); font-size: .95rem; }
+    .btn { width: 100%; padding: .7rem; background: var(--accent); border: none; border-radius: 5px; color: #fff; font-size: 1rem; cursor: pointer; margin-top: .5rem; }
+    .btn:hover { opacity: .9; }
+    #login-error { color: var(--err); font-size: .85rem; margin-top: .5rem; min-height: 1.2em; }
+
+    #dashboard { display: none; }
+    nav { display: flex; gap: 1rem; padding: 1rem 2rem; background: var(--panel); border-bottom: 1px solid #2d3244; }
+    nav button { background: none; border: none; color: var(--muted); cursor: pointer; padding: .4rem .8rem; border-radius: 5px; font-size: .9rem; }
+    nav button.active { background: var(--accent); color: #fff; }
+
+    .page { display: none; padding: 2rem; }
+    .page.active { display: block; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--panel); border-radius: 8px; padding: 1.2rem; }
+    .stat-card .label { font-size: .8rem; color: var(--muted); }
+    .stat-card .value { font-size: 2rem; font-weight: 700; color: var(--accent); margin-top: .3rem; }
+
+    table { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: 8px; overflow: hidden; }
+    thead tr { background: #1e2130; }
+    th, td { padding: .75rem 1rem; text-align: left; font-size: .9rem; border-bottom: 1px solid #2d3244; }
+    th { color: var(--muted); font-weight: 600; }
+    tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; padding: .2rem .5rem; border-radius: 4px; font-size: .75rem; font-weight: 600; }
+    .badge.ingress { background: #1d3461; color: #7eb3ff; }
+    .badge.relay   { background: #1d3428; color: #7effa3; }
+    .badge.egress  { background: #3d1d1d; color: #ff7e7e; }
+    .badge.active  { background: #1d3428; color: var(--ok); }
+    .badge.terminated { background: #3d1d1d; color: var(--err); }
+
+    .toolbar { display: flex; gap: .75rem; margin-bottom: 1rem; align-items: center; }
+    .toolbar input, .toolbar select { background: var(--panel); border: 1px solid #2d3244; border-radius: 5px; color: var(--text); padding: .4rem .7rem; font-size: .85rem; }
+    .toolbar button { padding: .4rem .9rem; background: var(--accent); border: none; border-radius: 5px; color: #fff; cursor: pointer; font-size: .85rem; }
+
+    form.panel-form { background: var(--panel); padding: 1.5rem; border-radius: 8px; max-width: 480px; margin-bottom: 2rem; }
+    form.panel-form h3 { margin-bottom: 1rem; color: var(--accent); }
+    form.panel-form .field input, form.panel-form .field select { width: 100%; }
+    .alert { padding: .6rem 1rem; border-radius: 5px; margin-bottom: 1rem; font-size: .9rem; }
+    .alert.success { background: #1d3428; color: var(--ok); }
+    .alert.error   { background: #3d1d1d; color: var(--err); }
+  </style>
+</head>
+<body>
+
+<!-- ── Login ── -->
+<div id="login-screen">
+  <div class="login-card">
+    <h2>🔒 Proxy Circuit</h2>
+    <div class="field">
+      <label for="username">Username</label>
+      <input id="username" type="text" placeholder="admin" autocomplete="username"/>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <button class="btn" id="login-btn">Sign in</button>
+    <div id="login-error"></div>
+  </div>
+</div>
+
+<!-- ── Dashboard ── -->
+<div id="dashboard">
+  <header>
+    <h1>⚡ Proxy Circuit — Control Plane</h1>
+    <div>
+      <span id="user-info"></span>
+      <button id="logout-btn">Logout</button>
+    </div>
+  </header>
+
+  <nav>
+    <button class="active" data-page="overview">Overview</button>
+    <button data-page="nodes">Nodes</button>
+    <button data-page="sessions">Sessions</button>
+    <button data-page="policies">Policies</button>
+  </nav>
+
+  <!-- Overview -->
+  <div class="page active" id="page-overview">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="label">Nodes</div><div class="value" id="stat-nodes">—</div></div>
+      <div class="stat-card"><div class="label">Active Sessions</div><div class="value" id="stat-sessions">—</div></div>
+      <div class="stat-card"><div class="label">Policies</div><div class="value" id="stat-policies">—</div></div>
+    </div>
+    <table id="tbl-nodes-overview">
+      <thead><tr><th>Host</th><th>Port</th><th>Role</th><th>Status</th><th>Region</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Nodes -->
+  <div class="page" id="page-nodes">
+    <form class="panel-form" id="form-add-node">
+      <h3>Register Node</h3>
+      <div id="node-alert"></div>
+      <div class="field"><label>Host</label><input name="host" placeholder="10.0.0.1" required/></div>
+      <div class="field"><label>Port</label><input name="port" type="number" value="1080" required/></div>
+      <div class="field"><label>Role</label>
+        <select name="role">
+          <option value="ingress">Ingress</option>
+          <option value="relay">Relay</option>
+          <option value="egress">Egress</option>
+        </select>
+      </div>
+      <div class="field"><label>Region (optional)</label><input name="region" placeholder="eu-west"/></div>
+      <button type="submit" class="btn">Add Node</button>
+    </form>
+    <table id="tbl-nodes">
+      <thead><tr><th>ID</th><th>Host</th><th>Port</th><th>Role</th><th>Status</th><th>Region</th><th>Action</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Sessions -->
+  <div class="page" id="page-sessions">
+    <div class="toolbar">
+      <input id="session-filter" placeholder="Filter by dst host…"/>
+      <button id="refresh-sessions">↻ Refresh</button>
+    </div>
+    <table id="tbl-sessions">
+      <thead><tr><th>ID</th><th>Src IP</th><th>Dst Host</th><th>Dst Port</th><th>Bytes Sent</th><th>Bytes Recv</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Policies -->
+  <div class="page" id="page-policies">
+    <form class="panel-form" id="form-add-policy">
+      <h3>Add Policy Rule</h3>
+      <div id="policy-alert"></div>
+      <div class="field"><label>Priority (lower = first)</label><input name="priority" type="number" value="100"/></div>
+      <div class="field"><label>Src IP Prefix (CIDR, optional)</label><input name="srcIpPrefix" placeholder="10.0.0.0/8"/></div>
+      <div class="field"><label>Dst Host Glob (optional)</label><input name="dstHostGlob" placeholder="*.example.com"/></div>
+      <div class="field"><label>Dst Ports (comma-separated, optional)</label><input name="dstPorts" placeholder="80,443"/></div>
+      <div class="field"><label>Verdict</label>
+        <select name="verdict">
+          <option value="allow">Allow</option>
+          <option value="deny">Deny</option>
+          <option value="log">Log</option>
+        </select>
+      </div>
+      <div class="field"><label>Description</label><input name="description" placeholder="Optional note"/></div>
+      <button type="submit" class="btn">Add Rule</button>
+    </form>
+    <table id="tbl-policies">
+      <thead><tr><th>Priority</th><th>Src Prefix</th><th>Dst Host</th><th>Ports</th><th>Verdict</th><th>Description</th><th>Action</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

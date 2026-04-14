@@ -1,0 +1,112 @@
+name: Build & Test
+
+on:
+  push:
+    branches: ["main", "develop", "copilot/**"]
+  pull_request:
+    branches: ["main", "develop"]
+
+jobs:
+  # ── C++ shared-security + proxy-core ───────────────────────────────────────
+  build-cpp:
+    name: C++ Build & Test
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build \
+            libboost-system-dev \
+            libssl-dev \
+            catch2
+
+      - name: Configure proxy-core
+        run: |
+          cmake -S proxy-core -B proxy-core/build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=ON \
+            -G Ninja
+
+      - name: Build proxy-core
+        run: cmake --build proxy-core/build --parallel
+
+      - name: Run C++ unit tests
+        run: |
+          cd proxy-core/build
+          ctest --output-on-failure --timeout 60
+
+      - name: Configure masking-client
+        run: |
+          cmake -S masking-client -B masking-client/build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -G Ninja
+
+      - name: Build masking-client
+        run: cmake --build masking-client/build --parallel
+
+  # ── Node.js web-app ────────────────────────────────────────────────────────
+  build-web:
+    name: Web App Test
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: web-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: web-app/package.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ci-test-secret-only
+
+      - name: Check for vulnerabilities
+        run: npm audit --audit-level=high
+
+  # ── Docker build smoke test ───────────────────────────────────────────────
+  docker-build:
+    name: Docker Build Smoke Test
+    runs-on: ubuntu-22.04
+    needs: [build-cpp, build-web]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build proxy-core image
+        run: |
+          docker build \
+            -f deploy/Dockerfile.proxy-core \
+            -t proxy-core:ci \
+            .
+
+      - name: Build web-app image
+        run: |
+          docker build \
+            -f deploy/Dockerfile.web-app \
+            -t proxy-web-app:ci \
+            .
+
+      - name: Smoke test web-app image
+        run: |
+          docker run -d --name webapp-test \
+            -e NODE_ENV=production \
+            -e JWT_SECRET=ci-secret \
+            -p 3000:3000 \
+            proxy-web-app:ci
+          sleep 5
+          curl -f http://localhost:3000/healthz
+          docker stop webapp-test
+          docker rm webapp-test
