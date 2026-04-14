@@ -16,7 +16,18 @@ bool cidr_match(const std::string& ip, const std::string& cidr) {
 
     auto slash = cidr.find('/');
     std::string network_str = slash == std::string::npos ? cidr : cidr.substr(0, slash);
-    int prefix_len = slash == std::string::npos ? 32 : std::stoi(cidr.substr(slash + 1));
+
+    // Validate and parse prefix length — treat invalid CIDR as non-match.
+    int prefix_len = 32;
+    if (slash != std::string::npos) {
+        try {
+            prefix_len = std::stoi(cidr.substr(slash + 1));
+        } catch (...) {
+            return false;  // non-numeric prefix
+        }
+        if (prefix_len < 0 || prefix_len > 32)
+            return false;  // out-of-range prefix
+    }
 
     in_addr ip_addr{}, net_addr{};
     if (inet_pton(AF_INET, ip.c_str(), &ip_addr) != 1)       return false;

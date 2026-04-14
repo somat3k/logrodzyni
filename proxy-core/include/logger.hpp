@@ -59,8 +59,10 @@ private:
     static std::string timestamp() {
         auto now = std::chrono::system_clock::now();
         auto t   = std::chrono::system_clock::to_time_t(now);
+        struct tm tm_buf;
+        gmtime_r(&t, &tm_buf);
         std::ostringstream oss;
-        oss << std::put_time(std::gmtime(&t), "%Y-%m-%dT%H:%M:%SZ");
+        oss << std::put_time(&tm_buf, "%Y-%m-%dT%H:%M:%SZ");
         return oss.str();
     }
     static const char* level_str(LogLevel lvl) {

@@ -30,7 +30,7 @@
 ## Vertical Scaling
 
 Adjust `thread_pool_size` in `proxy.conf` and `max_connections`.
-Reload with `SIGHUP` or restart the container.
+Restart the container after making these changes; `proxy-core` does not currently support reloading them via `SIGHUP`.
 
 ## KPIs to Watch
 

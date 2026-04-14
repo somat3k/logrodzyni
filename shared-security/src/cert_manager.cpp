@@ -108,18 +108,33 @@ std::shared_ptr<CertManager> CertManager::from_leaf_pem(const std::string& cert_
     std::string key_pem  = read_file(key_path);
 
     mgr->impl_->leaf_cert = pem_to_x509(cert_pem);
-    mgr->impl_->leaf_key  = pem_to_pkey(key_pem, pass);
+    if (!mgr->impl_->leaf_cert)
+        throw CertError("Failed to parse leaf cert: " + openssl_error_str());
+
+    mgr->impl_->leaf_key = pem_to_pkey(key_pem, pass);
+    if (!mgr->impl_->leaf_key)
+        throw CertError("Failed to parse leaf key: " + openssl_error_str());
+
     return mgr;
 }
 
 std::vector<uint8_t> CertManager::generate_rsa_key(int bits) {
     EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, nullptr);
-    if (!ctx) throw CertError("EVP_PKEY_CTX_new_id failed");
+    if (!ctx) throw CertError("EVP_PKEY_CTX_new_id failed: " + openssl_error_str());
 
     EVP_PKEY* pkey = nullptr;
-    EVP_PKEY_keygen_init(ctx);
-    EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, bits);
-    EVP_PKEY_keygen(ctx, &pkey);
+    if (EVP_PKEY_keygen_init(ctx) <= 0) {
+        EVP_PKEY_CTX_free(ctx);
+        throw CertError("EVP_PKEY_keygen_init failed: " + openssl_error_str());
+    }
+    if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, bits) <= 0) {
+        EVP_PKEY_CTX_free(ctx);
+        throw CertError("EVP_PKEY_CTX_set_rsa_keygen_bits failed: " + openssl_error_str());
+    }
+    if (EVP_PKEY_keygen(ctx, &pkey) <= 0 || !pkey) {
+        EVP_PKEY_CTX_free(ctx);
+        throw CertError("RSA key generation failed: " + openssl_error_str());
+    }
     EVP_PKEY_CTX_free(ctx);
 
     BIO* bio = BIO_new(BIO_s_mem());
@@ -135,10 +150,21 @@ std::vector<uint8_t> CertManager::generate_rsa_key(int bits) {
 
 std::vector<uint8_t> CertManager::generate_ec_key() {
     EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, nullptr);
+    if (!ctx) throw CertError("EVP_PKEY_CTX_new_id failed: " + openssl_error_str());
+
     EVP_PKEY* pkey = nullptr;
-    EVP_PKEY_keygen_init(ctx);
-    EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, NID_X9_62_prime256v1);
-    EVP_PKEY_keygen(ctx, &pkey);
+    if (EVP_PKEY_keygen_init(ctx) <= 0) {
+        EVP_PKEY_CTX_free(ctx);
+        throw CertError("EVP_PKEY_keygen_init failed: " + openssl_error_str());
+    }
+    if (EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, NID_X9_62_prime256v1) <= 0) {
+        EVP_PKEY_CTX_free(ctx);
+        throw CertError("EC curve selection failed: " + openssl_error_str());
+    }
+    if (EVP_PKEY_keygen(ctx, &pkey) <= 0 || !pkey) {
+        EVP_PKEY_CTX_free(ctx);
+        throw CertError("EC key generation failed: " + openssl_error_str());
+    }
     EVP_PKEY_CTX_free(ctx);
 
     BIO* bio = BIO_new(BIO_s_mem());

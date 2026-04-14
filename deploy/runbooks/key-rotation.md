@@ -28,18 +28,18 @@ openssl x509 -req -in new-node.csr -CA ca.crt -CAkey ca.key \
     -extensions v3_req -extfile san.cnf
 ```
 
-### 3. Deploy new cert (zero-downtime)
+### 3. Deploy new cert (restart required)
 
 1. Copy `new-node.crt` and `new-node.key` to the node's cert volume.
-2. Send `SIGHUP` to the proxy-core process (it will reload TLS on next handshake).
+2. Restart the `proxy-core` process/container so it loads the new TLS certificate and key.
    ```bash
-   docker kill --signal=HUP proxy-relay
+   docker restart proxy-relay
    ```
-3. Verify new cert is in use:
+3. Verify the restarted service is presenting the new certificate:
    ```bash
    openssl s_client -connect relay:1080 </dev/null | openssl x509 -noout -dates
    ```
-4. Remove old cert files only after confirming all connections use the new cert.
+4. Remove old cert files only after confirming the restarted service is using the new cert.
 
 ### 4. JWT Secret rotation (web-app)
 

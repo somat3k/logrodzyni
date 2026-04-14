@@ -12,7 +12,7 @@
 | Policy bypass | Proxy core | Policy engine evaluated before relay is established |
 | Container escape | All | Non-root users, minimal base images, read-only mounts |
 | Log injection | All | Structured JSON logging; no raw user input in log messages |
-| Dependency vulnerability | Web app | `npm audit` in CI; pinned versions |
+| Dependency vulnerability | Web app | `npm audit` in CI; lockfile-managed installs and reviewed dependency updates |
 
 ## Authentication & Authorization
 

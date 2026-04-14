@@ -29,11 +29,13 @@ void apply_hardening_impl(ssl::context& ctx,
         ctx.set_options(ssl::context::no_tlsv1_2);
     }
 
-    // Set cipher suite.
+    // Set cipher suite — throw on invalid cipher string so misconfiguration is detected early.
     const std::string& ciphers = cipher_list.empty() ? DEFAULT_CIPHERS : cipher_list;
-    SSL_CTX_set_cipher_list(ctx.native_handle(), ciphers.c_str());
-    SSL_CTX_set_ciphersuites(ctx.native_handle(),
-                              "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256");
+    if (SSL_CTX_set_cipher_list(ctx.native_handle(), ciphers.c_str()) != 1)
+        throw std::runtime_error("SSL_CTX_set_cipher_list failed: invalid cipher string");
+    if (SSL_CTX_set_ciphersuites(ctx.native_handle(),
+                                  "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256") != 1)
+        throw std::runtime_error("SSL_CTX_set_ciphersuites failed: invalid TLS 1.3 cipher string");
 }
 } // namespace
 

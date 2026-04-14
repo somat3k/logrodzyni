@@ -9,8 +9,10 @@ find_package(Boost 1.74 REQUIRED COMPONENTS system)
 find_package(Threads REQUIRED)
 
 # Shared security library.
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../shared-security
-                 ${CMAKE_CURRENT_BINARY_DIR}/shared-security)
+if (NOT TARGET shared_security)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../shared-security
+                     ${CMAKE_CURRENT_BINARY_DIR}/shared-security)
+endif()
 
 # ── proxy-core library (reusable by tests) ────────────────────────────────────
 add_library(proxy_core_lib STATIC

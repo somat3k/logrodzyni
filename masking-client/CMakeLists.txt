@@ -8,8 +8,10 @@ find_package(Boost 1.74 REQUIRED COMPONENTS system)
 find_package(OpenSSL REQUIRED)
 find_package(Threads REQUIRED)
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../shared-security
-                 ${CMAKE_CURRENT_BINARY_DIR}/shared-security)
+if (NOT TARGET shared_security)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../shared-security
+                     ${CMAKE_CURRENT_BINARY_DIR}/shared-security)
+endif()
 
 add_executable(masking-client
     src/main.cpp

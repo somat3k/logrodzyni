@@ -21,8 +21,11 @@ bool KillSwitch::run_iptables(const std::string& args) const {
 }
 
 bool KillSwitch::apply_rules() const {
-    // Create OUTPUT chain.
+    // Make rule application idempotent in case of a previous crash:
+    // 1. Create the custom chain (ignore error if it already exists).
     run_iptables("-N " + std::string(CHAIN));
+    // 2. Flush the chain to remove any stale/duplicate rules.
+    run_iptables("-F " + std::string(CHAIN));
 
     // Allow established / related.
     run_iptables("-A " + std::string(CHAIN) +
@@ -46,14 +49,20 @@ bool KillSwitch::apply_rules() const {
     // Block everything else.
     run_iptables("-A " + std::string(CHAIN) + " -j DROP");
 
-    // Attach chain to OUTPUT.
-    bool ok = run_iptables("-I OUTPUT 1 -j " + std::string(CHAIN));
-    return ok;
+    // Attach chain to OUTPUT only if not already attached (-C checks for the rule).
+    bool jump_exists = run_iptables("-C OUTPUT -j " + std::string(CHAIN));
+    if (!jump_exists) {
+        bool ok = run_iptables("-I OUTPUT 1 -j " + std::string(CHAIN));
+        return ok;
+    }
+    return true;
 }
 
 bool KillSwitch::remove_rules() const {
-    // Detach and flush chain.
-    run_iptables("-D OUTPUT -j " + std::string(CHAIN));
+    // Remove all OUTPUT jumps to the chain (in case of duplicate insertions).
+    while (run_iptables("-D OUTPUT -j " + std::string(CHAIN))) {
+        // keep deleting until no more references exist
+    }
     run_iptables("-F " + std::string(CHAIN));
     run_iptables("-X " + std::string(CHAIN));
     return true;

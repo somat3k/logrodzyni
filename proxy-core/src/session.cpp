@@ -86,6 +86,19 @@ void Session::socks5_handshake() {
                         net::buffer(self->client_buf_.data() + 2, nmethods),
                         [self, nmethods](boost::system::error_code ec2, size_t) {
             if (ec2) { self->stop(); return; }
+            // Check whether the client offered "no authentication" (0x00).
+            bool offered_no_auth = false;
+            for (uint8_t i = 0; i < nmethods; ++i) {
+                if (self->client_buf_[2 + i] == 0x00) { offered_no_auth = true; break; }
+            }
+            if (!offered_no_auth) {
+                // Per RFC 1928: reply 0xFF (no acceptable methods) and close.
+                uint8_t reject[2] = {0x05, 0xFF};
+                net::async_write(self->client_sock_,
+                                 net::buffer(reject, 2),
+                                 [self](auto...) { self->stop(); });
+                return;
+            }
             // Accept "no authentication" (0x00).
             uint8_t reply[2] = {0x05, 0x00};
             net::async_write(self->client_sock_,

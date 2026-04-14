@@ -51,14 +51,23 @@ void ConnectionManager::stop() {
     http_acceptor_.close(ec);
 
     std::lock_guard<std::mutex> lk(sessions_mu_);
-    for (auto& [id, sess] : sessions_)
-        sess->stop();
+    for (auto& [id, weak_sess] : sessions_) {
+        if (auto sess = weak_sess.lock())
+            sess->stop();
+    }
     sessions_.clear();
     LOG_INFO("ConnectionManager stopped, all sessions terminated.");
 }
 
 size_t ConnectionManager::session_count() const {
     std::lock_guard<std::mutex> lk(sessions_mu_);
+    // Evict expired weak_ptrs and return live count.
+    for (auto it = sessions_.begin(); it != sessions_.end(); ) {
+        if (it->second.expired())
+            it = sessions_.erase(it);
+        else
+            ++it;
+    }
     return sessions_.size();
 }
 
@@ -67,8 +76,11 @@ void ConnectionManager::do_accept_tcp(tcp::acceptor& acceptor) {
     acceptor.async_accept(
         [this, &acceptor](boost::system::error_code ec, tcp::socket sock) {
             if (ec) {
-                if (!stopped_)
-                    LOG_WARN("Accept error: ", ec.message());
+                if (!stopped_) {
+                    LOG_WARN("Accept error: ", ec.message(), " — retrying");
+                    // Re-issue accept so transient errors don't stop the loop.
+                    do_accept_tcp(acceptor);
+                }
                 return;
             }
             // Enforce max connection limit.
@@ -94,10 +106,7 @@ void ConnectionManager::do_accept_tcp(tcp::acceptor& acceptor) {
 
 void ConnectionManager::register_session(std::shared_ptr<Session> sess) {
     std::lock_guard<std::mutex> lk(sessions_mu_);
-    uint64_t id = sess->id();
-    sessions_[id] = sess;
-    // Schedule cleanup when session ends (sessions self-stop, we poll via weak_ptr).
-    // For simplicity, we use a periodic eviction pattern from ProxyServer.
+    sessions_[sess->id()] = sess;  // stored as weak_ptr; auto-expires when session ends
 }
 
 void ConnectionManager::unregister_session(uint64_t id) {

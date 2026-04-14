@@ -28,8 +28,7 @@
 ### proxy-core (C++)
 - Accepts client connections (SOCKS5 on :1080, HTTP CONNECT on :8080)
 - Applies policy rules (ACL, rate limiting) before establishing relay
-- Forwards traffic to next-hop node over a TLS mTLS link
-- Exposes health/metrics on :9090 (control endpoint)
+- Forwards traffic directly to the requested destination host/port over a plain TCP relay
 
 ### shared-security (C++ library)
 - AES-256-GCM encryption/decryption

@@ -3,6 +3,7 @@
 #include <vector>
 #include <chrono>
 #include <memory>
+#include <stdexcept>
 #include <openssl/x509.h>
 
 namespace shared_security {

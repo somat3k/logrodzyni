@@ -4,6 +4,9 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include <array>
+#include <atomic>
+#include <cstdint>
 
 namespace proxy_core {
 

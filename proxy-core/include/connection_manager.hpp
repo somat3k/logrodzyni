@@ -45,7 +45,7 @@ private:
     boost::asio::ip::tcp::acceptor    http_acceptor_;
 
     mutable std::mutex                sessions_mu_;
-    std::unordered_map<uint64_t, std::shared_ptr<Session>> sessions_;
+    std::unordered_map<uint64_t, std::weak_ptr<Session>> sessions_;
 
     std::atomic<bool> stopped_{false};
 };

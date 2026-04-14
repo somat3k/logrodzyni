@@ -28,10 +28,11 @@ services:
       - certs:/etc/proxy-core/certs:ro
       - ./configs/ingress.conf:/etc/proxy-core/proxy.conf:ro
     environment:
+      # NODE_ROLE is informational; configure the actual role via the mounted proxy.conf.
       - NODE_ROLE=ingress
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "1080"]
+      test: ["CMD-SHELL", "grep -qE '^[[:space:]]*[0-9]+: [0-9A-F]{8}:0438 .* 0A ' /proc/net/tcp || grep -qE '^[[:space:]]*[0-9]+: [0-9A-F]{32}:0438 .* 0A ' /proc/net/tcp6"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -46,6 +47,7 @@ services:
       - certs:/etc/proxy-core/certs:ro
       - ./configs/relay.conf:/etc/proxy-core/proxy.conf:ro
     environment:
+      # NODE_ROLE is informational; configure the actual role via the mounted relay.conf.
       - NODE_ROLE=relay
     restart: unless-stopped
     depends_on:
@@ -61,6 +63,7 @@ services:
       - certs:/etc/proxy-core/certs:ro
       - ./configs/egress.conf:/etc/proxy-core/proxy.conf:ro
     environment:
+      # NODE_ROLE is informational; configure the actual role via the mounted egress.conf.
       - NODE_ROLE=egress
     restart: unless-stopped
 
