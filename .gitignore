@@ -1,0 +1,40 @@
+# Build artifacts
+build/
+*/build/
+*.o
+*.a
+*.so
+*.dylib
+proxy-core/bin/
+masking-client/bin/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Node.js
+web-app/node_modules/
+web-app/.env
+.env
+
+# Secrets & certs (never commit)
+*.key
+*.pem
+*.p12
+*.pfx
+!*.example
+
+# Editor / OS
+.DS_Store
+.vscode/
+*.swp
+*.swo
+__pycache__/
+
+# Logs
+*.log
+
+# SQLite runtime database
+web-app/data/

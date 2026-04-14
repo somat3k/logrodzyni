@@ -1,0 +1,51 @@
+FROM node:20-bookworm-slim AS deps
+
+# Upgrade npm so its bundled transitive deps (cross-spawn, glob, minimatch, tar, etc.)
+# are at versions without HIGH/CRITICAL CVEs. Then replace every picomatch copy inside
+# npm's own node_modules tree with 4.0.4 (fixes CVE-2026-33671; npm@latest ships 4.0.3
+# via tinyglobby's nested node_modules).
+RUN npm install -g npm@latest && \
+    npm install -g picomatch@4.0.4 && \
+    find /usr/local/lib/node_modules/npm -path '*/node_modules/picomatch' -type d \
+         -exec sh -c 'rm -rf "$1" && cp -r /usr/local/lib/node_modules/picomatch "$1"' _ {} \; && \
+    npm uninstall -g picomatch && \
+    npm cache clean --force
+
+WORKDIR /app
+COPY web-app/package.json web-app/package-lock.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+# ── Runtime ───────────────────────────────────────────────────────────────────
+FROM node:20-bookworm-slim
+
+# Upgrade npm here too so the runtime image's /usr/local/lib/node_modules/npm
+# contains patched transitive dependencies (avoids Trivy HIGH findings).
+# Replace picomatch@4.0.3 (in npm's internal tinyglobby) with 4.0.4 (CVE-2026-33671).
+RUN npm install -g npm@latest && \
+    npm install -g picomatch@4.0.4 && \
+    find /usr/local/lib/node_modules/npm -path '*/node_modules/picomatch' -type d \
+         -exec sh -c 'rm -rf "$1" && cp -r /usr/local/lib/node_modules/picomatch "$1"' _ {} \; && \
+    npm uninstall -g picomatch && \
+    npm cache clean --force
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        dumb-init \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -r -s /sbin/nologin webapp
+
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY web-app/src     ./src
+COPY web-app/public  ./public
+COPY web-app/package.json ./
+
+RUN chown -R webapp /app
+USER webapp
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000/healthz', r => process.exit(r.statusCode===200?0:1))"
+
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "src/server.js"]

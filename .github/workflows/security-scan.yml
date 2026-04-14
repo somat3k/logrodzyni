@@ -1,0 +1,108 @@
+name: Security Scan
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  schedule:
+    # Run weekly on Sundays at 03:00 UTC.
+    - cron: "0 3 * * 0"
+
+jobs:
+  # ── npm dependency audit ──────────────────────────────────────────────────
+  npm-audit:
+    name: npm audit
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: web-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - run: npm audit --audit-level=high
+
+  # ── CodeQL (JavaScript) ────────────────────────────────────────────────────
+  codeql-js:
+    name: CodeQL — JavaScript
+    runs-on: ubuntu-22.04
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+          queries: security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # ── CodeQL (C++) ───────────────────────────────────────────────────────────
+  codeql-cpp:
+    name: CodeQL — C++
+    runs-on: ubuntu-22.04
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build libboost-system-dev libssl-dev
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: cpp
+          queries: security-and-quality
+
+      - name: Build for analysis
+        run: |
+          cmake -S proxy-core -B proxy-core/build \
+            -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF -G Ninja
+          cmake --build proxy-core/build --parallel
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # ── Trivy container scan ──────────────────────────────────────────────────
+  trivy-scan:
+    name: Trivy Container Scan
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build web-app image
+        run: |
+          docker build \
+            -f deploy/Dockerfile.web-app \
+            -t proxy-web-app:scan \
+            .
+
+      - name: Run Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: proxy-web-app:scan
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
