@@ -20,7 +20,7 @@ concurrency:
 jobs:
   build-and-deploy:
     name: Build & Deploy SPA
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}

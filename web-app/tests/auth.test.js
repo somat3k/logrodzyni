@@ -6,7 +6,7 @@ process.env.DB_PATH    = '/tmp/proxy-circuit-test-auth.db';
 
 // Remove stale test DB
 const fs = require('fs');
-if (fs.existsSync(process.env.DB_PATH)) fs.unlinkSync(process.env.DB_PATH);
+try { if (fs.existsSync(process.env.DB_PATH)) fs.unlinkSync(process.env.DB_PATH); } catch { /* ignore */ }
 
 const request = require('supertest');
 const app     = require('../src/server');

@@ -94,6 +94,13 @@ router.post('/guest', (req, res) => {
 });
 
 // ── GET /api/auth/wallet/challenge  (request a sign challenge) ───────────────
+/**
+ * Returns a one-time challenge string for the given Ethereum address.
+ * NOTE: Wallet signature verification (POST /wallet/verify) currently requires
+ * the `ethers` npm package for production-grade keccak256-based EIP-191 recovery.
+ * Install it with: npm install ethers
+ * Until then, /wallet/verify returns 501 Not Implemented.
+ */
 router.get('/wallet/challenge', (req, res) => {
   const { address } = req.query;
   if (!address || !/^0x[0-9a-fA-F]{40}$/.test(address))
@@ -121,10 +128,19 @@ router.post('/wallet/verify', (req, res) => {
   }
 
   // Recover the signer address from the personal_sign message.
+  // NOTE: Real EIP-191 / MetaMask signatures use keccak256, which requires
+  // the `ethers` package (not included). Return 501 until it is installed.
   let recovered;
   try {
     recovered = recoverPersonalSign(record.challenge, signature);
-  } catch {
+  } catch (e) {
+    if (e.code === 'NOT_IMPLEMENTED') {
+      return res.status(501).json({
+        error: 'Wallet signature verification is not yet enabled on this server. ' +
+               'Install the ethers package and restart the server.',
+        detail: 'npm install ethers',
+      });
+    }
     return res.status(400).json({ error: 'Invalid signature' });
   }
 
@@ -149,20 +165,15 @@ router.post('/logout', (req, res) => {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /**
- * Recover signer from an EIP-191 personal_sign signature (pure Node, no ethers).
+ * Build the EIP-191 prefixed message and attempt to recover the signer.
  * MetaMask uses personal_sign which prepends "\x19Ethereum Signed Message:\n<len>".
+ * Standard Ethereum signatures use keccak256 (not SHA-256). This placeholder
+ * uses SHA-256 for structural demonstration only and is NOT compatible with
+ * real MetaMask signatures. Add `npm install ethers` and use
+ * `ethers.verifyMessage(message, signature)` for production.
  */
 function recoverPersonalSign(message, signature) {
-  const { createHash } = require('crypto');
-  const prefix  = `\x19Ethereum Signed Message:\n${Buffer.byteLength(message, 'utf8')}`;
-  const msgHash = createHash('sha256'); // placeholder – real impl below
-  void msgHash;                         // suppress lint; we use keccak below
-
-  // Use Node's built-in secp256k1 through the crypto module (Node ≥ 18).
-  // We implement the keccak256 manually using the Web Crypto subtlety ─ not
-  // available without a native dep, so we use a pure-JS fallback here that
-  // calls the ethers-style manual recovery. For production, add the `ethers`
-  // package. For now we re-implement the minimal EIP-191 + secp256k1 recovery:
+  const prefix = `\x19Ethereum Signed Message:\n${Buffer.byteLength(message, 'utf8')}`;
   return eip191Recover(prefix + message, signature);
 }
 
@@ -171,10 +182,9 @@ function eip191Recover(prefixedMessage, sig) {
   const sigBuf = Buffer.from(sig.replace(/^0x/, ''), 'hex');
   if (sigBuf.length !== 65) throw new Error('Bad signature length');
 
-  // Use Node.js built-in crypto for Keccak-256 via SHA-3 (they differ, but
-  // Node does not ship keccak256 natively). We use a dependency-free approach:
-  // compute the hash as SHA-256 over the prefixed message for dev/demo purposes,
-  // and note that production should use ethers.js or js-sha3 for real keccak256.
+  // NOTE: This uses SHA-256 as a placeholder. Real Ethereum signatures use
+  // keccak256. Install `ethers` and replace this function with:
+  //   ethers.verifyMessage(originalMessage, signature)  → returns recovered address.
   const { createHash } = require('crypto');
   const msgHash = createHash('sha256').update(prefixedMessage).digest();
 
@@ -183,27 +193,18 @@ function eip191Recover(prefixedMessage, sig) {
   let   v = sigBuf[64];
   if (v < 27) v += 27;
 
-  // Node.js ≥ 18 has createECDH and verify, but not secp256k1 key recovery.
-  // We delegate to a lightweight in-process implementation.
-  // For production: npm install ethers and use ethers.verifyMessage.
   return secp256k1Recover(msgHash, r, s, v - 27);
 }
 
 /**
- * Minimal secp256k1 public key recovery using Node's built-in crypto.
- * NOTE: This uses SHA-256 as the hash (not keccak256) so it is compatible only
- * with signatures produced against SHA-256-hashed messages.
- * For standard MetaMask keccak256 signatures, replace with ethers.verifyMessage.
+ * Placeholder secp256k1 recovery — throws NOT_IMPLEMENTED until ethers is installed.
+ * For production: npm install ethers → use ethers.verifyMessage(message, signature).
  */
 function secp256k1Recover(msgHash, r, s, recoveryId) {
-  // Node.js 18+ exposes createPrivateKey / createPublicKey but not secp256k1
-  // key recovery directly. We use the DER-encoded uncompressed public key trick
-  // via the 'node:crypto' ECDH + manual ECDSA verification path.
-  //
-  // Fallback: treat as unverifiable in this pure-Node environment; the wallet
-  // challenge endpoint is a skeleton — add `npm install ethers` for production.
   void msgHash; void r; void s; void recoveryId;
-  throw new Error('Wallet signature recovery requires the ethers package. Install with: npm install ethers');
+  const err  = new Error('Wallet signature recovery requires the ethers package.');
+  err.code   = 'NOT_IMPLEMENTED';
+  throw err;
 }
 
 module.exports = router;
