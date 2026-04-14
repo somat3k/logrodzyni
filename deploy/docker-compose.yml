@@ -32,6 +32,7 @@ services:
       - NODE_ROLE=ingress
     restart: unless-stopped
     healthcheck:
+      # 0438 = port 1080 in little-endian hex; 0A = TCP state LISTEN
       test: ["CMD-SHELL", "grep -qE '^[[:space:]]*[0-9]+: [0-9A-F]{8}:0438 .* 0A ' /proc/net/tcp || grep -qE '^[[:space:]]*[0-9]+: [0-9A-F]{32}:0438 .* 0A ' /proc/net/tcp6"]
       interval: 30s
       timeout: 5s

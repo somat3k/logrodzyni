@@ -61,14 +61,11 @@ void ConnectionManager::stop() {
 
 size_t ConnectionManager::session_count() const {
     std::lock_guard<std::mutex> lk(sessions_mu_);
-    // Evict expired weak_ptrs and return live count.
-    for (auto it = sessions_.begin(); it != sessions_.end(); ) {
-        if (it->second.expired())
-            it = sessions_.erase(it);
-        else
-            ++it;
-    }
-    return sessions_.size();
+    // Count only live sessions; expired weak_ptrs are cleaned up by register_session().
+    size_t count = 0;
+    for (const auto& [id, weak_sess] : sessions_)
+        if (!weak_sess.expired()) ++count;
+    return count;
 }
 
 void ConnectionManager::do_accept_tcp(tcp::acceptor& acceptor) {
@@ -106,7 +103,18 @@ void ConnectionManager::do_accept_tcp(tcp::acceptor& acceptor) {
 
 void ConnectionManager::register_session(std::shared_ptr<Session> sess) {
     std::lock_guard<std::mutex> lk(sessions_mu_);
+    evict_expired_sessions();  // remove finished sessions before inserting
     sessions_[sess->id()] = sess;  // stored as weak_ptr; auto-expires when session ends
+}
+
+void ConnectionManager::evict_expired_sessions() {
+    // Caller must hold sessions_mu_.
+    for (auto it = sessions_.begin(); it != sessions_.end(); ) {
+        if (it->second.expired())
+            it = sessions_.erase(it);
+        else
+            ++it;
+    }
 }
 
 void ConnectionManager::unregister_session(uint64_t id) {

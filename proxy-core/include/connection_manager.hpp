@@ -35,6 +35,7 @@ private:
     void do_accept_tcp(boost::asio::ip::tcp::acceptor& acceptor);
     void register_session(std::shared_ptr<Session> sess);
     void unregister_session(uint64_t id);
+    void evict_expired_sessions();  // must be called with sessions_mu_ held
 
     boost::asio::io_context&          ioc_;
     const ProxyConfig&                cfg_;
