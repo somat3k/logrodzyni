@@ -7,6 +7,8 @@
 #include <openssl/err.h>
 #include <cstring>
 #include <ctime>
+#include <fstream>
+#include <iterator>
 
 namespace shared_security {
 
@@ -69,17 +71,11 @@ CertManager::~CertManager() = default;
 std::shared_ptr<CertManager> CertManager::from_ca_pem(const std::string& ca_cert_path,
                                                         const std::string& ca_key_path,
                                                         const std::string& pass) {
-    // Read files into strings.
-    auto read_file = [](const std::string& path) {
-        FILE* f = fopen(path.c_str(), "r");
+    auto read_file = [](const std::string& path) -> std::string {
+        std::ifstream f(path, std::ios::binary);
         if (!f) throw CertError("Cannot open file: " + path);
-        fseek(f, 0, SEEK_END);
-        long sz = ftell(f);
-        rewind(f);
-        std::string s(sz, '\0');
-        fread(s.data(), 1, sz, f);
-        fclose(f);
-        return s;
+        return std::string(std::istreambuf_iterator<char>(f),
+                           std::istreambuf_iterator<char>());
     };
 
     auto mgr = std::shared_ptr<CertManager>(new CertManager());
@@ -100,16 +96,11 @@ std::shared_ptr<CertManager> CertManager::from_ca_pem(const std::string& ca_cert
 std::shared_ptr<CertManager> CertManager::from_leaf_pem(const std::string& cert_path,
                                                           const std::string& key_path,
                                                           const std::string& pass) {
-    auto read_file = [](const std::string& path) {
-        FILE* f = fopen(path.c_str(), "r");
+    auto read_file = [](const std::string& path) -> std::string {
+        std::ifstream f(path, std::ios::binary);
         if (!f) throw CertError("Cannot open file: " + path);
-        fseek(f, 0, SEEK_END);
-        long sz = ftell(f);
-        rewind(f);
-        std::string s(sz, '\0');
-        fread(s.data(), 1, sz, f);
-        fclose(f);
-        return s;
+        return std::string(std::istreambuf_iterator<char>(f),
+                           std::istreambuf_iterator<char>());
     };
 
     auto mgr = std::shared_ptr<CertManager>(new CertManager());

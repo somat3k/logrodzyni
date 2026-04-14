@@ -86,12 +86,11 @@ std::vector<PolicyRule> PolicyEngine::rules() const {
 }
 
 void PolicyEngine::load_rules(const std::string& path) {
-    // Minimal line-oriented key=value loader.
-    // For production a JSON/YAML parser (e.g., nlohmann/json) would be used.
     std::ifstream f(path);
     if (!f) throw std::runtime_error("Cannot open policy file: " + path);
+    // Rules are added dynamically via add_rule() after parsing.
+    // (A JSON/YAML parser such as nlohmann/json would be used in production.)
     LOG_INFO("Policy engine: loaded rules from ", path);
-    // Rules can be added dynamically via add_rule().
 }
 
 bool PolicyEngine::matches_cidr(const std::string& ip, const std::string& cidr) {

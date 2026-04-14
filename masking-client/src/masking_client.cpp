@@ -1,6 +1,7 @@
 #include "masking_client.hpp"
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 #include <stdexcept>
 #include <thread>
 
@@ -54,7 +55,8 @@ void MaskingClient::do_reconnect() {
         reconnect_attempts_ = 0;
     } catch (const std::exception& e) {
         set_state(ConnectionState::Error, e.what());
-        int delay = std::min(2 * (reconnect_attempts_ + 1), MAX_RECONNECT_DELAY_SEC);
+        int delay = std::min(static_cast<int>(std::pow(2, reconnect_attempts_)),
+                             MAX_RECONNECT_DELAY_SEC);
         ++reconnect_attempts_;
         schedule_reconnect(delay);
     }

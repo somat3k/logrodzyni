@@ -43,6 +43,7 @@ document.getElementById('login-btn').addEventListener('click', async () => {
     userRole = data.role;
     sessionStorage.setItem('token', token);
     sessionStorage.setItem('role', userRole);
+    sessionStorage.setItem('username', username);
     showDashboard(username);
   } catch (e) {
     err.textContent = 'Login failed: ' + e.message;

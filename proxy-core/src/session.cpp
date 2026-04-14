@@ -258,7 +258,7 @@ void Session::relay_loop() {
                 net::buffer(self->client_buf_.data(), n),
                 [self](boost::system::error_code ec2, size_t) {
                     if (ec2) { self->half_close(); return; }
-                    self->relay_loop();
+                    self->relay_client_to_remote();
                 });
         });
 
@@ -272,7 +272,39 @@ void Session::relay_loop() {
                 net::buffer(self->remote_buf_.data(), n),
                 [self](boost::system::error_code ec2, size_t) {
                     if (ec2) { self->half_close(); return; }
-                    // Remote -> Client path will restart via the outer relay_loop call.
+                    self->relay_remote_to_client();
+                });
+        });
+}
+
+void Session::relay_client_to_remote() {
+    auto self = shared_from_this();
+    client_sock_.async_read_some(
+        net::buffer(client_buf_),
+        [self](boost::system::error_code ec, size_t n) {
+            if (ec || n == 0) { self->half_close(); return; }
+            self->bytes_received_ += n;
+            net::async_write(self->remote_sock_,
+                net::buffer(self->client_buf_.data(), n),
+                [self](boost::system::error_code ec2, size_t) {
+                    if (ec2) { self->half_close(); return; }
+                    self->relay_client_to_remote();
+                });
+        });
+}
+
+void Session::relay_remote_to_client() {
+    auto self = shared_from_this();
+    remote_sock_.async_read_some(
+        net::buffer(remote_buf_),
+        [self](boost::system::error_code ec, size_t n) {
+            if (ec || n == 0) { self->half_close(); return; }
+            self->bytes_sent_ += n;
+            net::async_write(self->client_sock_,
+                net::buffer(self->remote_buf_.data(), n),
+                [self](boost::system::error_code ec2, size_t) {
+                    if (ec2) { self->half_close(); return; }
+                    self->relay_remote_to_client();
                 });
         });
 }

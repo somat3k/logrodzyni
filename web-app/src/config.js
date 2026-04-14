@@ -21,6 +21,7 @@ module.exports = {
   },
 
   // In-process user store for demo; replace with a real DB adapter.
+  // Each user MUST have a unique password hash in production.
   users: [
     {
       id:       'u1',
@@ -32,6 +33,7 @@ module.exports = {
     {
       id:       'u2',
       username: 'operator',
+      // bcrypt hash of "changeme" – replace with a different password in production.
       passwordHash: '$2a$12$C0Xty8ktgoSyKgK23ilm1.TsCLxtynUF/3rAthjwaMzZDoRo9hGv.',
       role:     'operator',
     },

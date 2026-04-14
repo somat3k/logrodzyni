@@ -11,6 +11,8 @@ jobs:
   build-cpp:
     name: C++ Build & Test
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -51,6 +53,8 @@ jobs:
   build-web:
     name: Web App Test
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: web-app
@@ -81,6 +85,8 @@ jobs:
   docker-build:
     name: Docker Build Smoke Test
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
     needs: [build-cpp, build-web]
     steps:
       - uses: actions/checkout@v4

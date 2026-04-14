@@ -77,6 +77,17 @@ router.patch('/:id', requireRole('operator'), (req, res) => {
   const node = nodes.get(req.params.id);
   if (!node) return res.status(404).json({ error: 'Node not found' });
 
+  // Validate individual fields when supplied.
+  if (req.body.port !== undefined) {
+    const port = req.body.port;
+    if (!Number.isInteger(port) || port < 1 || port > 65535)
+      return res.status(400).json({ error: 'port must be an integer between 1 and 65535' });
+  }
+  if (req.body.role !== undefined) {
+    if (!['ingress', 'relay', 'egress'].includes(req.body.role))
+      return res.status(400).json({ error: 'role must be ingress | relay | egress' });
+  }
+
   const allowed = ['host', 'port', 'role', 'region', 'status'];
   for (const key of allowed) {
     if (req.body[key] !== undefined) node[key] = req.body[key];

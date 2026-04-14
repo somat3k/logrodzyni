@@ -52,6 +52,8 @@ private:
     // ---- common relay ----
     void resolve_and_connect(const std::string& host, uint16_t port);
     void relay_loop();
+    void relay_client_to_remote();
+    void relay_remote_to_client();
     void half_close();
 
     TcpSocket                 client_sock_;
