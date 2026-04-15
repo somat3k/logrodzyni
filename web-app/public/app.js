@@ -135,18 +135,81 @@ function openAuth(mode = 'login') {
   const sub     = document.getElementById('auth-sub');
   if (mode === 'register') {
     title.textContent = 'Create your account';
-    sub.textContent   = 'Join Logo — it\'s free';
-    document.querySelectorAll('.auth-tab').forEach(t => {
-      if (t.dataset.tab === 'reg') t.click();
-    });
+    sub.textContent   = 'Join logrodzyni — free & open';
+    switchAuthTab('reg');
   } else {
     title.textContent = 'Welcome back';
     sub.textContent   = 'Sign in to your control plane';
+    switchAuthTab('pw');
   }
   overlay.classList.add('open');
+  // Auto-focus first text input in the active panel
+  setTimeout(() => {
+    const panel = overlay.querySelector('.auth-panel.active');
+    const first = panel?.querySelector('input[type="text"], input[type="password"]');
+    if (first) first.focus();
+  }, 60);
 }
 function closeAuth() {
   document.getElementById('auth-overlay').classList.remove('open');
+}
+
+function switchAuthTab(tabId) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+  const tab = document.querySelector(`.auth-tab[data-tab="${tabId}"]`);
+  if (tab) tab.classList.add('active');
+  document.getElementById('tab-' + tabId)?.classList.add('active');
+  const title = document.getElementById('auth-title');
+  const sub   = document.getElementById('auth-sub');
+  if (tabId === 'reg')  { if (title) title.textContent = 'Create your account'; if (sub) sub.textContent = 'Join logrodzyni — free & open'; }
+  if (tabId === 'pw')   { if (title) title.textContent = 'Welcome back';         if (sub) sub.textContent = 'Sign in to your control plane'; }
+  // Auto-focus first input in the newly active panel
+  setTimeout(() => {
+    const panel = document.getElementById('tab-' + tabId);
+    const first = panel?.querySelector('input[type="text"], input[type="password"]');
+    if (first) first.focus();
+  }, 40);
+}
+
+// Helper — set button loading state
+function btnLoading(btn, loading, originalText) {
+  if (loading) {
+    btn.disabled = true;
+    btn.dataset.originalText = btn.textContent;
+    btn.classList.add('btn-loading');
+    btn.textContent = originalText || btn.textContent;
+  } else {
+    btn.disabled = false;
+    btn.classList.remove('btn-loading');
+    btn.textContent = btn.dataset.originalText || btn.textContent;
+  }
+}
+
+// Helper — show auth error with shake
+function showAuthError(errEl, msg) {
+  errEl.textContent = msg;
+  errEl.classList.remove('shaking');
+  void errEl.offsetWidth; // reflow
+  errEl.classList.add('shaking');
+  setTimeout(() => errEl.classList.remove('shaking'), 400);
+}
+
+// Helper — validate required fields, mark them red, return true if all ok
+function requireFields(pairs) {
+  let ok = true;
+  pairs.forEach(([id, label]) => {
+    const inp = document.getElementById(id);
+    if (!inp) return;
+    const wrap = inp.closest('.field') || inp.parentElement;
+    if (!inp.value.trim()) {
+      wrap.classList.add('field-err');
+      ok = false;
+    } else {
+      wrap.classList.remove('field-err');
+    }
+  });
+  return ok;
 }
 
 // Landing CTAs
@@ -174,68 +237,63 @@ document.querySelectorAll('.svc-card[data-launch]').forEach(card => {
   });
 });
 
-// Auth tabs
+// Auth tabs — use shared switchAuthTab helper
 document.querySelectorAll('.auth-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById('tab-' + tab.dataset.tab)?.classList.add('active');
-  });
+  tab.addEventListener('click', () => switchAuthTab(tab.dataset.tab));
 });
 
-// ── Auth panel cross-links (Register ↔ Sign In) ───────────────────────────────
+// Auth panel cross-links (Register ↔ Sign In)
 document.querySelectorAll('.auth-link[data-switch-tab]').forEach(link => {
-  link.addEventListener('click', () => {
-    const tabId = link.dataset.switchTab;
-    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
-    const tab = document.querySelector(`.auth-tab[data-tab="${tabId}"]`);
-    if (tab) tab.classList.add('active');
-    document.getElementById('tab-' + tabId)?.classList.add('active');
-    const title = document.getElementById('auth-title');
-    const sub   = document.getElementById('auth-sub');
-    if (tabId === 'reg') {
-      if (title) title.textContent = 'Create your account';
-      if (sub)   sub.textContent   = 'Join logrodzyni — it\'s free';
-    } else if (tabId === 'pw') {
-      if (title) title.textContent = 'Welcome back';
-      if (sub)   sub.textContent   = 'Sign in to your control plane';
-    }
-  });
+  link.addEventListener('click', () => switchAuthTab(link.dataset.switchTab));
 });
 
 // ── Password login ────────────────────────────────────────────────────────────
 document.getElementById('pw-btn')?.addEventListener('click', async () => {
-  const username = document.getElementById('pw-user').value.trim();
-  const password = document.getElementById('pw-pass').value;
+  const btn      = document.getElementById('pw-btn');
   const errEl    = document.getElementById('pw-err');
   errEl.textContent = '';
+  // Remove field-err highlights on a new attempt
+  ['pw-user','pw-pass'].forEach(id => document.getElementById(id)?.closest('.field')?.classList.remove('field-err'));
+  if (!requireFields([['pw-user','Username'],['pw-pass','Password']])) {
+    showAuthError(errEl, 'Please enter your username and password.');
+    return;
+  }
+  const username = document.getElementById('pw-user').value.trim();
+  const password = document.getElementById('pw-pass').value;
+  btnLoading(btn, true);
   try {
     const data = await api('POST', '/auth/login', { username, password });
     setAuth(data); closeAuth(); showApp();
-  } catch (e) { errEl.textContent = e.message; }
+  } catch (e) {
+    btnLoading(btn, false);
+    showAuthError(errEl, e.message || 'Sign in failed. Check your credentials.');
+  }
 });
 ['pw-user','pw-pass'].forEach(id =>
-  document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('pw-btn').click(); })
+  document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('pw-btn')?.click(); })
 );
 
 // ── SHA-256 login ─────────────────────────────────────────────────────────────
 document.getElementById('sha-btn')?.addEventListener('click', async () => {
+  const btn      = document.getElementById('sha-btn');
   const username = document.getElementById('sha-user').value.trim();
   const key      = document.getElementById('sha-key').value;
   const errEl    = document.getElementById('sha-err');
   errEl.textContent = '';
-  if (!username || !key) { errEl.textContent = 'Username and key are required'; return; }
+  if (!username || !key) { showAuthError(errEl, 'Username and key are required'); return; }
   let keyHex = key;
   if (!/^[0-9a-f]{64}$/i.test(key)) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key));
     keyHex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
   }
+  btnLoading(btn, true);
   try {
     const data = await api('POST', '/auth/login/sha256', { username, key: keyHex });
     setAuth(data); closeAuth(); showApp();
-  } catch (e) { errEl.textContent = e.message; }
+  } catch (e) {
+    btnLoading(btn, false);
+    showAuthError(errEl, e.message || 'SHA-256 sign in failed.');
+  }
 });
 
 // ── Wallet login ──────────────────────────────────────────────────────────────
@@ -268,31 +326,47 @@ document.getElementById('w-sign-btn')?.addEventListener('click', async () => {
 
 // ── Guest login ───────────────────────────────────────────────────────────────
 document.getElementById('guest-btn')?.addEventListener('click', async () => {
+  const btn   = document.getElementById('guest-btn');
   const errEl = document.getElementById('guest-err');
   errEl.textContent = '';
+  btnLoading(btn, true);
   try {
     const data = await api('POST', '/auth/guest', {});
     setAuth(data); closeAuth(); showApp();
-  } catch (e) { errEl.textContent = e.message; }
+  } catch (e) {
+    btnLoading(btn, false);
+    showAuthError(errEl, e.message || 'Guest access failed.');
+  }
 });
 
 // ── Register ──────────────────────────────────────────────────────────────────
 document.getElementById('reg-btn')?.addEventListener('click', async () => {
+  const btn          = document.getElementById('reg-btn');
   const username     = document.getElementById('reg-user').value.trim();
   const display_name = document.getElementById('reg-name').value.trim();
   const password     = document.getElementById('reg-pass').value;
   const confirm      = document.getElementById('reg-confirm').value;
   const errEl        = document.getElementById('reg-err');
   errEl.textContent  = '';
-  if (!username || !password) { errEl.textContent = 'Username and password are required'; return; }
-  if (password !== confirm)   { errEl.textContent = 'Passwords do not match'; return; }
-  if (password.length < 8)    { errEl.textContent = 'Password must be at least 8 characters'; return; }
+  ['reg-user','reg-pass','reg-confirm'].forEach(id => document.getElementById(id)?.closest('.field')?.classList.remove('field-err'));
+  if (!requireFields([['reg-user','Username'],['reg-pass','Password'],['reg-confirm','Confirm']])) {
+    showAuthError(errEl, 'Username and password are required.'); return;
+  }
+  if (password !== confirm)   { showAuthError(errEl, 'Passwords do not match.'); document.getElementById('reg-confirm')?.closest('.field')?.classList.add('field-err'); return; }
+  if (password.length < 8)    { showAuthError(errEl, 'Password must be at least 8 characters.'); document.getElementById('reg-pass')?.closest('.field')?.classList.add('field-err'); return; }
+  btnLoading(btn, true);
   try {
     const data = await api('POST', '/auth/register', { username, password, display_name });
     setAuth(data); closeAuth(); showApp();
     toast('Account created! Welcome, ' + userName, 'ok');
-  } catch (e) { errEl.textContent = e.message; }
+  } catch (e) {
+    btnLoading(btn, false);
+    showAuthError(errEl, e.message || 'Registration failed. Try a different username.');
+  }
 });
+['reg-user','reg-pass','reg-confirm'].forEach(id =>
+  document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('reg-btn')?.click(); })
+);
 
 // ── App init ──────────────────────────────────────────────────────────────────
 function showApp() {
@@ -310,7 +384,7 @@ function showApp() {
   const hdRole   = document.getElementById('hd-role');
   if (hdRole) { hdRole.textContent = esc(userRole || 'viewer'); hdRole.className = 'role-chip ' + (userRole || 'viewer'); }
 
-  loadDashboard();
+  navigate('dashboard');
 }
 
 if (token) {

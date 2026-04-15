@@ -185,6 +185,13 @@ button{font-family:var(--font);cursor:pointer}
 .auth-switch{text-align:center;font-size:.79rem;color:var(--muted);margin-top:.9rem}
 .auth-link{color:var(--g1);cursor:pointer;font-weight:600;transition:opacity .2s}
 .auth-link:hover{opacity:.75}
+.btn:disabled{opacity:.6;cursor:not-allowed;transform:none!important}
+.btn-loading{position:relative;color:transparent!important}
+.btn-loading::after{content:'';position:absolute;width:16px;height:16px;border:2px solid rgba(0,0,0,.35);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.field.field-err input{border-color:var(--err)!important;box-shadow:0 0 0 2px rgba(248,113,113,.18)}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+.auth-err.shaking{animation:shake .35s ease}
 
 /* ══════════════ APP SHELL ══════════════ */
 #app{display:none}
