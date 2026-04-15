@@ -551,7 +551,12 @@ async function loadAudit() {
 document.getElementById('audit-refresh-btn')?.addEventListener('click', loadAudit);
 
 // ── JWT Creator ────────────────────────────────────────────────────────────────
-function b64url(str) { return btoa(str).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,''); }
+/** Base64url-encode a UTF-8 string safely (handles non-Latin1 / unicode input). */
+function b64url(str) {
+  const bytes = new TextEncoder().encode(str);
+  const binary = Array.from(bytes, b => String.fromCharCode(b)).join('');
+  return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
 function b64dec(str) { str=str.replace(/-/g,'+').replace(/_/g,'/'); while(str.length%4)str+='='; return atob(str); }
 async function hmacSha256(secret, data) {
   const enc = new TextEncoder();
@@ -628,9 +633,9 @@ async function loadAccount() {
     const rl = document.getElementById('acc-role-lbl');     if(rl) rl.textContent = esc(u.role) + ' · ' + esc(u.auth_type);
     const di = document.getElementById('acc-display');      if(di) di.value = esc(u.display_name || '');
     const si = document.getElementById('acc-since');        if(si) si.value = (u.created_at||'').slice(0,10);
-    // SHA token placeholder (not stored as-is; show auth_type info)
-    const st = document.getElementById('acc-sha-token');
-    if (st) st.textContent = u.auth_type === 'sha256_key' ? 'sha256:••••••••' : 'N/A — not a SHA-256 account';
+    // SHA-256 token section: only relevant for SHA-256 accounts
+    const shaSection = document.getElementById('acc-sha-section');
+    if (shaSection) shaSection.style.display = u.auth_type === 'sha256_key' ? '' : 'none';
   } catch (e) { toast('Failed to load account: ' + e.message, 'err'); }
 }
 
@@ -689,6 +694,77 @@ document.querySelectorAll('.modal-overlay').forEach(ov => {
 });
 
 // ── Docs ──────────────────────────────────────────────────────────────────────
+/**
+ * Build a sanitized DOM fragment from an HTML string.
+ * Only an allowlist of tags is passed through; all other elements are unwrapped
+ * (their children are preserved but the element itself is dropped).
+ * Attributes are stripped except href/target on <a> elements, with protocol filtering.
+ */
+function buildSafeDocFragment(html) {
+  const parser  = new DOMParser();
+  const parsed  = parser.parseFromString(String(html ?? ''), 'text/html');
+  const fragment = document.createDocumentFragment();
+  const allowedTags = new Set([
+    'H3','H4','P','UL','OL','LI','PRE','CODE','STRONG','EM','A','BR','SPAN',
+  ]);
+  const allowedLinkProtocols = new Set(['http:','https:','mailto:','tel:']);
+
+  function sanitizeNode(node) {
+    if (node.nodeType === Node.TEXT_NODE)
+      return document.createTextNode(node.textContent || '');
+    if (node.nodeType !== Node.ELEMENT_NODE) return null;
+
+    if (!allowedTags.has(node.tagName)) {
+      // Unwrap: keep children, drop the tag itself
+      const frag = document.createDocumentFragment();
+      node.childNodes.forEach(child => {
+        const safe = sanitizeNode(child);
+        if (safe) frag.appendChild(safe);
+      });
+      return frag;
+    }
+
+    const safeEl = document.createElement(node.tagName.toLowerCase());
+
+    if (node.tagName === 'A') {
+      const href = node.getAttribute('href');
+      if (href) {
+        try {
+          const url = new URL(href, window.location.origin);
+          if (allowedLinkProtocols.has(url.protocol)) safeEl.setAttribute('href', href);
+        } catch (_) { /* drop invalid URL */ }
+      }
+      if (node.getAttribute('target') === '_blank') {
+        safeEl.setAttribute('target', '_blank');
+        safeEl.setAttribute('rel', 'noopener noreferrer');
+      }
+    }
+
+    node.childNodes.forEach(child => {
+      const safe = sanitizeNode(child);
+      if (safe) safeEl.appendChild(safe);
+    });
+    return safeEl;
+  }
+
+  parsed.body.childNodes.forEach(node => {
+    const safe = sanitizeNode(node);
+    if (safe) fragment.appendChild(safe);
+  });
+  return fragment;
+}
+
+function renderDoc(key) {
+  const data = DOCS[key];
+  const body = document.getElementById('doc-body');
+  if (!body || !data) return;
+  body.textContent = '';
+  body.appendChild(buildSafeDocFragment(data.body));
+  document.querySelectorAll('.docs-nav-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.doc === key);
+  });
+}
+
 const DOCS = {
   intro: {
     title: 'Introduction',
@@ -862,19 +938,6 @@ DELETE /api/nodes/:id    — Delete node (admin)</pre>
 Payload: { "id", "username", "role", "authType", "iat", "exp" }</pre>`
   },
 };
-
-function renderDoc(key) {
-  const data = DOCS[key];
-  const body = document.getElementById('doc-body');
-  if (!body || !data) return;
-  body.innerHTML = '';  // reset — only set via innerHTML since content is trusted static strings
-  const wrapper = document.createElement('div');
-  wrapper.innerHTML = data.body;
-  body.appendChild(wrapper);
-  document.querySelectorAll('.docs-nav-item').forEach(item => {
-    item.classList.toggle('active', item.dataset.doc === key);
-  });
-}
 
 document.querySelectorAll('.docs-nav-item').forEach(item => {
   item.addEventListener('click', () => renderDoc(item.dataset.doc));

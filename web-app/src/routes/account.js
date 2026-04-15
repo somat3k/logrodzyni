@@ -10,6 +10,8 @@ router.use(authenticate);
 
 // ── GET /api/account ── return profile for the logged-in user ─────────────────
 router.get('/', (req, res) => {
+  if (req.user.guest)
+    return res.status(403).json({ error: 'Guest accounts do not have a persistent profile' });
   const user = Users.findById(req.user.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
   res.json({
@@ -34,9 +36,12 @@ router.patch('/', async (req, res, next) => {
     const updates = {};
 
     if (display_name !== undefined) {
-      if (typeof display_name !== 'string' || !display_name.trim() || display_name.length > 64)
+      if (typeof display_name !== 'string')
         return res.status(400).json({ error: 'display_name must be 1–64 characters' });
-      updates.display_name = display_name.trim();
+      const trimmedDisplayName = display_name.trim();
+      if (!trimmedDisplayName || trimmedDisplayName.length > 64)
+        return res.status(400).json({ error: 'display_name must be 1–64 characters' });
+      updates.display_name = trimmedDisplayName;
     }
 
     if (new_password !== undefined) {
@@ -58,7 +63,9 @@ router.patch('/', async (req, res, next) => {
     db.prepare(`UPDATE users SET ${sets}, updated_at = datetime('now') WHERE id = @id`)
       .run({ ...updates, id: user.id });
 
-    AuditLog.append('account.update', user.username, null, 'success', { fields: Object.keys(updates) });
+    // Build human-readable field list for audit (use API names, not column names)
+    const auditFields = Object.keys(updates).map(k => k === 'password_hash' ? 'password' : k);
+    AuditLog.append('account.update', user.username, null, 'success', { fields: auditFields });
     res.json({ message: 'Account updated successfully' });
   } catch (err) { next(err); }
 });

@@ -871,18 +871,17 @@ tbody td:first-child{color:var(--white);font-weight:500}
                 <div class="form-row"><button class="btn btn-primary btn-sm" id="acc-pw-btn">Update Password</button><span id="acc-pw-msg" style="font-size:.82rem;color:var(--g1);align-self:center"></span></div>
                 <div class="auth-err" id="acc-pw-err" style="margin-top:.5rem"></div>
               </div>
-              <div class="card">
+              <div id="acc-sha-section" class="card" style="display:none">
                 <div class="card-title">SHA-256 Token</div>
-                <p style="font-size:.82rem;color:var(--muted2);margin-bottom:1rem">Use this token for passwordless sign-in via the SHA-256 authentication tab.</p>
-                <div class="cred-row"><span class="cred-lbl">Token</span><span class="cred-val" id="acc-sha-token">—</span><button class="btn btn-muted btn-sm" id="acc-copy-sha">Copy</button></div>
-                <button class="btn btn-outline btn-sm" id="acc-regen-sha" style="margin-top:.5rem">Regenerate Token</button>
+                <p style="font-size:.82rem;color:var(--muted2);margin-bottom:1rem">Your SHA-256 credential is managed server-side. Use the SHA-256 sign-in tab to authenticate.</p>
               </div>
             </div>
             <div class="acc-panel" id="stab-security">
               <div class="card">
                 <div class="card-title">Danger Zone</div>
                 <p style="font-size:.85rem;color:var(--muted2);margin-bottom:1rem">Irreversible account actions.</p>
-                <button class="btn btn-danger btn-sm" id="acc-revoke-btn">Revoke All Sessions</button>
+                <button class="btn btn-danger btn-sm" id="acc-revoke-btn" disabled style="opacity:.45;cursor:not-allowed" title="Coming soon">Revoke All Sessions</button>
+                <p style="font-size:.75rem;color:var(--muted);margin-top:.6rem">Session revocation is coming soon.</p>
               </div>
             </div>
           </div>
