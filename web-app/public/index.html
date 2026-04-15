@@ -182,6 +182,9 @@ button{font-family:var(--font);cursor:pointer}
 .wallet-row{display:flex;align-items:center;gap:.5rem;padding:.5rem .7rem;background:rgba(5,12,5,.7);border:1px solid var(--border2);border-radius:var(--radius);font-size:.8rem;color:var(--muted);margin-bottom:.75rem}
 .wdot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .3s}
 .wdot.on{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.auth-switch{text-align:center;font-size:.79rem;color:var(--muted);margin-top:.9rem}
+.auth-link{color:var(--g1);cursor:pointer;font-weight:600;transition:opacity .2s}
+.auth-link:hover{opacity:.75}
 
 /* ══════════════ APP SHELL ══════════════ */
 #app{display:none}
@@ -440,8 +443,8 @@ tbody td:first-child{color:var(--white);font-weight:500}
               <circle cx="27" cy="27" r="2.5" fill="#22c55e" opacity=".6"><animate attributeName="r" values="2.5;4.5;2.5" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".6;.15;.6" dur="2s" repeatCount="indefinite"/></circle>
             </svg>
           </div>
-          <h3>Proxy Layer</h3>
-          <p>Intelligent L4/L7 traffic routing with mTLS termination, real-time ACL enforcement, and dynamic upstream cluster management.</p>
+          <h3>Proxy Effective Engine</h3>
+          <p>Intelligent L4/L7 traffic routing with mTLS termination, real-time ACL enforcement, and dynamic upstream cluster management — the core relay of logrodzyni.</p>
           <span class="svc-arr">Open dashboard →</span>
         </div>
 
@@ -456,8 +459,8 @@ tbody td:first-child{color:var(--white);font-weight:500}
               <circle cx="27" cy="51" r="1.8" fill="#4ade80"/><circle cx="3" cy="39" r="1.8" fill="#4ade80"/><circle cx="3" cy="15" r="1.8" fill="#4ade80"/>
             </svg>
           </div>
-          <h3>Shard Manager</h3>
-          <p>Automatic data partitioning with consistent hashing, zero-downtime rebalancing, and cross-shard query routing.</p>
+          <h3>Shard Framework</h3>
+          <p>Tensor-native distributed data: tensor objects share data across environments; graph-collected records are persisted in encrypted blocks. Open registry, attribute-driven exchange.</p>
           <span class="svc-arr">Open dashboard →</span>
         </div>
 
@@ -473,8 +476,8 @@ tbody td:first-child{color:var(--white);font-weight:500}
               <line x1="27" y1="30.5" x2="27" y2="49" stroke="#22c55e" stroke-width="1" opacity=".4" stroke-dasharray="2 2"/>
             </svg>
           </div>
-          <h3>Holography</h3>
-          <p>Multi-region state replication with causal consistency, conflict-free merges, and live holographic topology projections.</p>
+          <h3>Holography &amp; HoloLang</h3>
+          <p>Multi-region state replication with causal consistency and live topology projections. Home of HoloLang — the experimental processing language with its own compiler.</p>
           <span class="svc-arr">Open dashboard →</span>
         </div>
 
@@ -492,8 +495,8 @@ tbody td:first-child{color:var(--white);font-weight:500}
               <rect x="17" y="25.5" width="30" height="4" rx="2" fill="rgba(34,197,94,.35)"><animate attributeName="width" values="30;14;30" dur="2.2s" repeatCount="indefinite"/></rect>
             </svg>
           </div>
-          <h3>Operational Systems</h3>
-          <p>Real-time process orchestration, resource scheduling, runbook automation, and ML-powered alerting across your fleet.</p>
+          <h3>Canvas IDE</h3>
+          <p>Collects all four pillars into one IDE. ML and Neural Networks built into a Domain Specific Language, C Preprocessor, and Proto extensibility — acceleration at every layer.</p>
           <span class="svc-arr">Open dashboard →</span>
         </div>
       </div>
@@ -567,10 +570,12 @@ tbody td:first-child{color:var(--white);font-weight:500}
 
       <!-- Password -->
       <div class="auth-panel active" id="tab-pw">
+        <p style="font-size:.8rem;color:var(--muted2);margin-bottom:1rem;line-height:1.6">Enter your username and password to access your control plane.</p>
         <div class="field"><label>Username</label><input id="pw-user" type="text" placeholder="your username" autocomplete="username"/></div>
         <div class="field"><label>Password</label><input id="pw-pass" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
-        <button class="btn btn-primary btn-block" id="pw-btn">Sign In</button>
+        <button class="btn btn-primary btn-block" id="pw-btn">Sign In →</button>
         <div class="auth-err" id="pw-err"></div>
+        <div class="auth-switch">No account yet? <span class="auth-link" data-switch-tab="reg">Register →</span></div>
       </div>
 
       <!-- SHA-256 -->
@@ -600,14 +605,16 @@ tbody td:first-child{color:var(--white);font-weight:500}
 
       <!-- Register -->
       <div class="auth-panel" id="tab-reg">
+        <p style="font-size:.8rem;color:var(--muted2);margin-bottom:1rem;line-height:1.6">Create your account — open to everyone, no approval required. You'll get immediate access with <strong style="color:var(--white)">viewer</strong> role.</p>
         <div class="form-grid" style="margin-bottom:0">
-          <div class="field"><label>Username</label><input id="reg-user" type="text" placeholder="choose a username" autocomplete="username"/></div>
-          <div class="field"><label>Display Name</label><input id="reg-name" type="text" placeholder="Your Name"/></div>
+          <div class="field"><label>Username</label><input id="reg-user" type="text" placeholder="3–32 chars, a–z 0–9 _-" autocomplete="username"/></div>
+          <div class="field"><label>Display Name <span style="font-weight:400;opacity:.6">(optional)</span></label><input id="reg-name" type="text" placeholder="Your Name"/></div>
         </div>
         <div class="field"><label>Password</label><input id="reg-pass" type="password" placeholder="minimum 8 characters" autocomplete="new-password"/></div>
         <div class="field"><label>Confirm Password</label><input id="reg-confirm" type="password" placeholder="repeat password" autocomplete="new-password"/></div>
         <button class="btn btn-primary btn-block" id="reg-btn">Create Account →</button>
         <div class="auth-err" id="reg-err"></div>
+        <div class="auth-switch">Already have an account? <span class="auth-link" data-switch-tab="pw">Sign In →</span></div>
       </div>
 
     </div>
@@ -645,7 +652,8 @@ tbody td:first-child{color:var(--white);font-weight:500}
         <div class="sb-item" data-page="proxy"><svg viewBox="0 0 20 20" fill="none"><circle cx="4" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/><circle cx="16" cy="5" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="16" cy="15" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M6.5 9l4-3M6.5 11l4 3" stroke="currentColor" stroke-width="1.3"/></svg>Proxy</div>
         <div class="sb-item" data-page="shards"><svg viewBox="0 0 20 20" fill="none"><polygon points="10,2 18,6 18,14 10,18 2,14 2,6" fill="none" stroke="currentColor" stroke-width="1.5"/><polygon points="10,6 14,8 14,12 10,14 6,12 6,8" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".6"/></svg>Shards</div>
         <div class="sb-item" data-page="holography"><svg viewBox="0 0 20 20" fill="none"><ellipse cx="10" cy="10" rx="8" ry="3" fill="none" stroke="currentColor" stroke-width="1.5"/><ellipse cx="10" cy="10" rx="5" ry="2" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".6"/><circle cx="10" cy="10" r="1.5" fill="currentColor"/></svg>Holography</div>
-        <div class="sb-item" data-page="os"><svg viewBox="0 0 20 20" fill="none"><rect x="2" y="3" width="16" height="5" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="12" width="16" height="5" rx="1.5" stroke="currentColor" stroke-width="1.5" opacity=".5"/><circle cx="5" cy="5.5" r="1" fill="currentColor"/><circle cx="5" cy="14.5" r="1" fill="currentColor" opacity=".5"/></svg>Oper. Systems</div>
+        <div class="sb-item" data-page="hololang"><svg viewBox="0 0 20 20" fill="none"><path d="M5 8l-3 2 3 2M15 8l3 2-3 2M12 6l-2.5 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>HoloLang</div>
+        <div class="sb-item" data-page="os"><svg viewBox="0 0 20 20" fill="none"><rect x="2" y="3" width="16" height="5" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="12" width="16" height="5" rx="1.5" stroke="currentColor" stroke-width="1.5" opacity=".5"/><circle cx="5" cy="5.5" r="1" fill="currentColor"/><circle cx="5" cy="14.5" r="1" fill="currentColor" opacity=".5"/></svg>Canvas IDE</div>
         <div class="sb-section">Infrastructure</div>
         <div class="sb-item" data-page="nodes"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="3" r="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="10" cy="17" r="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="3" cy="10" r="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="17" cy="10" r="1.5" stroke="currentColor" stroke-width="1.3"/><line x1="10" y1="5" x2="10" y2="7" stroke="currentColor" stroke-width="1.3"/><line x1="10" y1="13" x2="10" y2="15" stroke="currentColor" stroke-width="1.3"/><line x1="5" y1="10" x2="7" y2="10" stroke="currentColor" stroke-width="1.3"/><line x1="13" y1="10" x2="15" y2="10" stroke="currentColor" stroke-width="1.3"/></svg>Nodes<span class="sb-badge" id="badge-nodes">—</span></div>
         <div class="sb-item" data-page="sessions"><svg viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h8M6 12h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Sessions</div>
@@ -680,7 +688,7 @@ tbody td:first-child{color:var(--white);font-weight:500}
 
       <!-- Proxy -->
       <div class="page" id="page-proxy">
-        <div class="pg-hd"><div><h2>Proxy Layer</h2><p>Traffic routing, upstream clusters, and mTLS policy.</p></div><button class="btn btn-primary btn-sm" id="add-node-btn">+ Register Node</button></div>
+        <div class="pg-hd"><div><h2>Proxy Effective Engine</h2><p>logrodzyni — traffic routing, upstream clusters, and mTLS policy.</p></div><button class="btn btn-primary btn-sm" id="add-node-btn">+ Register Node</button></div>
         <div class="stats-row">
           <div class="stat-card"><div class="sc-lbl">Throughput</div><div class="sc-val">2.4 GB/s</div><div class="sc-sub">Current</div></div>
           <div class="stat-card"><div class="sc-lbl">P99 Latency</div><div class="sc-val">1.8ms</div><div class="sc-sub">Last 5 min</div></div>
@@ -694,12 +702,28 @@ tbody td:first-child{color:var(--white);font-weight:500}
 
       <!-- Shards -->
       <div class="page" id="page-shards">
-        <div class="pg-hd"><div><h2>Shard Manager</h2><p>Partition health, replication lag, and compaction jobs.</p></div><button class="btn btn-primary btn-sm">+ Add Shard</button></div>
+        <div class="pg-hd"><div><h2>Shard Framework</h2><p>Tensor-native distributed data — partitions, blocks, and encrypted graph records.</p></div><button class="btn btn-primary btn-sm">+ Add Shard</button></div>
         <div class="stats-row">
           <div class="stat-card"><div class="sc-lbl">Total Shards</div><div class="sc-val">128</div><div class="sc-sub">Partitions</div></div>
           <div class="stat-card"><div class="sc-lbl">Healthy</div><div class="sc-val" style="color:var(--ok)">126</div><div class="sc-sub">In sync</div></div>
           <div class="stat-card"><div class="sc-lbl">Rebal. Jobs</div><div class="sc-val">2</div><div class="sc-sub">Running</div></div>
           <div class="stat-card"><div class="sc-lbl">Avg Lag</div><div class="sc-val">12ms</div><div class="sc-sub">Replication</div></div>
+        </div>
+        <div class="grid2" style="margin-bottom:1.25rem">
+          <div class="card">
+            <div class="card-title">Tensor Model</div>
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:.65rem">
+              <li style="display:flex;gap:.7rem;font-size:.84rem;color:var(--muted2)"><span style="color:var(--g1);flex-shrink:0;font-weight:700">▸</span><span><strong style="color:var(--white)">Tensor objects</strong> — Data assigned to a tensor is shared across any environment holding the same reference. Same environment = same data.</span></li>
+              <li style="display:flex;gap:.7rem;font-size:.84rem;color:var(--muted2)"><span style="color:var(--g1);flex-shrink:0;font-weight:700">▸</span><span><strong style="color:var(--white)">Graph-collected data</strong> — Tensors collect data from graphs. Graph nodes represent relationships; edges encode data flow.</span></li>
+              <li style="display:flex;gap:.7rem;font-size:.84rem;color:var(--muted2)"><span style="color:var(--g1);flex-shrink:0;font-weight:700">▸</span><span><strong style="color:var(--white)">Blocks</strong> — Register graph and shard data, then persist in <code style="background:rgba(34,197,94,.1);padding:.05rem .3rem;border-radius:4px;font-family:var(--mono)">[~]</code> encrypted form. Safe for public distribution.</span></li>
+              <li style="display:flex;gap:.7rem;font-size:.84rem;color:var(--muted2)"><span style="color:var(--g1);flex-shrink:0;font-weight:700">▸</span><span><strong style="color:var(--white)">Open registry</strong> — Tensors discover peers by matching attributes and exchange data via network-regulated channels. No central coordinator.</span></li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-title">Kaizen &amp; Lean Records</div>
+            <p style="font-size:.85rem;color:var(--muted2);line-height:1.75;margin-bottom:.75rem">Every shard write follows kaizen-lean principles: minimal, precise, purpose-built. Macro and algorithm mappings govern how records are persisted and replicated.</p>
+            <p style="font-size:.85rem;color:var(--muted2);line-height:1.75">Encrypted blocks ensure publicly safe distribution — the <code style="background:rgba(34,197,94,.1);padding:.05rem .3rem;border-radius:4px;font-family:var(--mono)">[~]</code> storage format provides at-rest confidentiality for tensor and graph data.</p>
+          </div>
         </div>
         <div class="tw"><table><thead><tr><th>Shard ID</th><th>Primary</th><th>Replicas</th><th>Size</th><th>Lag</th><th>Status</th></tr></thead><tbody id="shards-tbody">
           <tr><td>shard-001</td><td>node-us-e-01</td><td>3</td><td>24 GB</td><td>8ms</td><td><span class="tag tag-ok">healthy</span></td></tr>
@@ -725,18 +749,81 @@ tbody td:first-child{color:var(--white);font-weight:500}
 
       <!-- OS -->
       <div class="page" id="page-os">
-        <div class="pg-hd"><div><h2>Operational Systems</h2><p>Process orchestration, scheduling, and runbooks.</p></div><button class="btn btn-primary btn-sm">▶ Run Runbook</button></div>
+        <div class="pg-hd"><div><h2>Canvas IDE</h2><p>Operating Systems — process orchestration, ML/NN, DSL, and runbooks.</p></div><button class="btn btn-primary btn-sm">▶ Run Runbook</button></div>
         <div class="stats-row">
           <div class="stat-card"><div class="sc-lbl">Processes</div><div class="sc-val">42</div><div class="sc-sub">Running</div></div>
           <div class="stat-card"><div class="sc-lbl">CPU Avg</div><div class="sc-val">23%</div><div class="sc-sub">Fleet</div></div>
           <div class="stat-card"><div class="sc-lbl">Mem Avg</div><div class="sc-val">61%</div><div class="sc-sub">Fleet</div></div>
           <div class="stat-card"><div class="sc-lbl">Alerts</div><div class="sc-val" style="color:var(--warn)">3</div><div class="sc-sub">Open</div></div>
         </div>
+        <div class="grid2" style="margin-bottom:1.25rem">
+          <div class="card">
+            <div class="card-title">Canvas IDE</div>
+            <p style="font-size:.85rem;color:var(--muted2);line-height:1.75;margin-bottom:.75rem">Canvas IDE collects all four logrodzyni pillars — proxy, shards, HoloLang, and holography — into a single integrated development environment with ML and neural network primitives built directly into its DSL.</p>
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:.5rem">
+              <li style="font-size:.82rem;color:var(--muted2)"><span style="color:var(--g1);font-weight:700">▸</span> <strong style="color:var(--white)">DSL</strong> — Unified grammar for routing, shard topology, and ML pipeline config</li>
+              <li style="font-size:.82rem;color:var(--muted2)"><span style="color:var(--g1);font-weight:700">▸</span> <strong style="color:var(--white)">ML / NN built-in</strong> — Training, inference, and anomaly detection as first-class constructs</li>
+              <li style="font-size:.82rem;color:var(--muted2)"><span style="color:var(--g1);font-weight:700">▸</span> <strong style="color:var(--white)">C Preprocessor</strong> — Macro expansion and conditional compilation at IDE level</li>
+              <li style="font-size:.82rem;color:var(--muted2)"><span style="color:var(--g1);font-weight:700">▸</span> <strong style="color:var(--white)">Proto</strong> — Protocol Buffer schemas for typed cross-component contracts</li>
+            </ul>
+          </div>
+          <div class="card">
+            <div class="card-title">Status <span class="tag tag-warn" style="font-size:.69rem;vertical-align:middle;margin-left:.35rem">In Development</span></div>
+            <p style="font-size:.85rem;color:var(--muted2);line-height:1.75">Canvas IDE is currently in active development. Full IDE release and language specification will be published when the project goes public.</p>
+            <div class="alert alert-info" style="margin-top:.85rem;font-size:.82rem">📋 &nbsp;Full Canvas IDE specification — coming soon.</div>
+          </div>
+        </div>
         <div class="tw"><table><thead><tr><th>Process</th><th>Node</th><th>CPU</th><th>Memory</th><th>PID</th><th>Status</th></tr></thead><tbody id="os-tbody">
           <tr><td>proxy-core</td><td>node-us-e-01</td><td>18%</td><td>512 MB</td><td>1042</td><td><span class="tag tag-ok">running</span></td></tr>
           <tr><td>shard-rebalancer</td><td>node-eu-w-01</td><td>34%</td><td>1.2 GB</td><td>2218</td><td><span class="tag tag-warn">high-cpu</span></td></tr>
           <tr><td>audit-ingester</td><td>node-us-e-01</td><td>4%</td><td>128 MB</td><td>3301</td><td><span class="tag tag-ok">running</span></td></tr>
         </tbody></table></div>
+      </div>
+
+      <!-- HoloLang -->
+      <div class="page" id="page-hololang">
+        <div class="pg-hd">
+          <div><h2>HoloLang</h2><p>Experimental programming language for processing pipelines and device-level programming.</p></div>
+          <span class="tag" style="font-size:.76rem;padding:.3rem .9rem;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);color:var(--g4);align-self:center">Experimental</span>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card"><div class="sc-lbl">Status</div><div class="sc-val" style="font-size:1.05rem;color:var(--warn)">Active Dev</div><div class="sc-sub">Compiler WIP</div></div>
+          <div class="stat-card"><div class="sc-lbl">Paradigm</div><div class="sc-val" style="font-size:1.05rem">Tensor-Native</div><div class="sc-sub">Processing &amp; Devices</div></div>
+          <div class="stat-card"><div class="sc-lbl">Design</div><div class="sc-val" style="font-size:1.05rem">Kaizen</div><div class="sc-sub">Lean + Macro</div></div>
+          <div class="stat-card"><div class="sc-lbl">Compiler</div><div class="sc-val" style="font-size:1.05rem">Custom</div><div class="sc-sub">Native Toolchain</div></div>
+        </div>
+        <div class="grid2" style="margin-bottom:1.25rem">
+          <div class="card">
+            <div class="card-title">About HoloLang</div>
+            <p style="font-size:.87rem;color:var(--muted2);line-height:1.75;margin-bottom:.8rem">HoloLang is an experimental programming language designed for <strong style="color:var(--white)">processing pipelines</strong> and <strong style="color:var(--white)">device-level programming</strong>. It ships with its own native compiler and follows a deliberate, methodology-first approach to language and system design.</p>
+            <p style="font-size:.87rem;color:var(--muted2);line-height:1.75">Built around <strong style="color:var(--white)">kaizen</strong> (continuous, incremental improvement) and <strong style="color:var(--white)">lean programming</strong> principles — every construct has a minimal, precise purpose. Macro and algorithm mappings are first-class citizens of the grammar.</p>
+          </div>
+          <div class="card">
+            <div class="card-title">Core Concepts</div>
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:.65rem">
+              <li style="display:flex;gap:.7rem;font-size:.84rem;color:var(--muted2)"><span style="color:var(--g1);flex-shrink:0;font-weight:700">▸</span><span><strong style="color:var(--white)">Tensor objects</strong> — Data assigned to a tensor is shared across any environment holding the same tensor reference.</span></li>
+              <li style="display:flex;gap:.7rem;font-size:.84rem;color:var(--muted2)"><span style="color:var(--g1);flex-shrink:0;font-weight:700">▸</span><span><strong style="color:var(--white)">Attribute-driven networking</strong> — Tensors discover peers by matching attributes and exchange data via network-regulated channels.</span></li>
+              <li style="display:flex;gap:.7rem;font-size:.84rem;color:var(--muted2)"><span style="color:var(--g1);flex-shrink:0;font-weight:700">▸</span><span><strong style="color:var(--white)">Macro mappings</strong> — Algorithmic patterns encoded as macros for safe, repeatable device-level transformations.</span></li>
+              <li style="display:flex;gap:.7rem;font-size:.84rem;color:var(--muted2)"><span style="color:var(--g1);flex-shrink:0;font-weight:700">▸</span><span><strong style="color:var(--white)">Open registry</strong> — No admin gating. Each owner controls their own namespace. Free for all.</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:1.25rem">
+          <div class="card-title">Compiler &amp; Toolchain</div>
+          <div class="grid2">
+            <div>
+              <p style="font-size:.87rem;color:var(--muted2);line-height:1.75;margin-bottom:.75rem">The HoloLang compiler is a native toolchain purpose-built for the language. It targets processing units and device-level execution environments, optimised for kaizen-driven iterative pipelines.</p>
+              <p style="font-size:.87rem;color:var(--muted2);line-height:1.75">Compiler specification, release timeline, and binaries will be published when the project goes public.</p>
+            </div>
+            <div style="background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);padding:1.1rem;font-family:var(--mono);font-size:.8rem;color:var(--g3);line-height:1.8">
+              <span style="color:var(--muted);font-size:.72rem"># HoloLang — preview syntax</span><br/>
+              tensor data := graph.collect()<br/>
+              block.register(data, encrypt:[~])<br/>
+              shard.distribute(block, mode:open)
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-info">📋 &nbsp;HoloLang is in active development. Full language specification, grammar reference, and compiler release — coming soon when the project is publicly shared.</div>
       </div>
 
       <!-- Nodes -->
@@ -899,10 +986,11 @@ tbody td:first-child{color:var(--white);font-weight:500}
             <div class="docs-nav-item" data-doc="auth-doc">Authentication</div>
             <div class="docs-nav-item" data-doc="register-doc">Registration</div>
             <div class="docs-nav-sec">Services</div>
-            <div class="docs-nav-item" data-doc="proxy-doc">Proxy Layer</div>
-            <div class="docs-nav-item" data-doc="shards-doc">Shard Manager</div>
+            <div class="docs-nav-item" data-doc="proxy-doc">Proxy Engine</div>
+            <div class="docs-nav-item" data-doc="shards-doc">Shard Framework</div>
             <div class="docs-nav-item" data-doc="holo-doc">Holography</div>
-            <div class="docs-nav-item" data-doc="os-doc">Oper. Systems</div>
+            <div class="docs-nav-item" data-doc="hololang-doc">HoloLang</div>
+            <div class="docs-nav-item" data-doc="os-doc">Canvas IDE</div>
             <div class="docs-nav-sec">API Reference</div>
             <div class="docs-nav-item" data-doc="api-auth">Auth Endpoints</div>
             <div class="docs-nav-item" data-doc="api-nodes">Nodes API</div>

@@ -1,10 +1,10 @@
-/* Logo — Control Plane SPA  |  v2.0  |  All DOM mutations use textContent/createElement (XSS-safe) */
+/* logrodzyni — Control Plane SPA  |  v2.1  |  All DOM mutations use textContent/createElement (XSS-safe) */
 'use strict';
 
-// ── State ─────────────────────────────────────────────────────────────────────
-let token    = sessionStorage.getItem('jwt')  || null;
-let userRole = sessionStorage.getItem('role') || null;
-let userName = sessionStorage.getItem('user') || null;
+// ── State (localStorage → persists across browser restarts) ───────────────────
+let token    = localStorage.getItem('jwt')  || null;
+let userRole = localStorage.getItem('role') || null;
+let userName = localStorage.getItem('user') || null;
 let walletAddr = null;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -24,7 +24,20 @@ async function api(method, path, body) {
   const res = await fetch('/api' + path, opts);
   if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw Object.assign(new Error(data.error || res.statusText), { status: res.status });
+  if (!res.ok) {
+    // Auto-logout when a stored token is rejected by a non-auth endpoint (expired / revoked)
+    if (res.status === 401 && token && !path.startsWith('/auth/')) {
+      clearAuth();
+      const app     = document.getElementById('app');
+      const fab     = document.getElementById('fab');
+      const landing = document.getElementById('landing');
+      if (app)     { app.classList.remove('open'); app.style.display = 'none'; }
+      if (fab)     fab.style.display = 'none';
+      if (landing) landing.style.display = '';
+      toast('Session expired — please sign in again', 'err');
+    }
+    throw Object.assign(new Error(data.error || res.statusText), { status: res.status });
+  }
   return data;
 }
 
@@ -32,14 +45,14 @@ function setAuth(data) {
   token    = data.token;
   userRole = data.role;
   userName = data.username || data.role;
-  sessionStorage.setItem('jwt',  token);
-  sessionStorage.setItem('role', userRole);
-  sessionStorage.setItem('user', userName);
+  localStorage.setItem('jwt',  token);
+  localStorage.setItem('role', userRole);
+  localStorage.setItem('user', userName);
 }
 
 function clearAuth() {
   token = userRole = userName = null;
-  sessionStorage.clear();
+  localStorage.clear();
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
@@ -168,6 +181,27 @@ document.querySelectorAll('.auth-tab').forEach(tab => {
     document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
     tab.classList.add('active');
     document.getElementById('tab-' + tab.dataset.tab)?.classList.add('active');
+  });
+});
+
+// ── Auth panel cross-links (Register ↔ Sign In) ───────────────────────────────
+document.querySelectorAll('.auth-link[data-switch-tab]').forEach(link => {
+  link.addEventListener('click', () => {
+    const tabId = link.dataset.switchTab;
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+    const tab = document.querySelector(`.auth-tab[data-tab="${tabId}"]`);
+    if (tab) tab.classList.add('active');
+    document.getElementById('tab-' + tabId)?.classList.add('active');
+    const title = document.getElementById('auth-title');
+    const sub   = document.getElementById('auth-sub');
+    if (tabId === 'reg') {
+      if (title) title.textContent = 'Create your account';
+      if (sub)   sub.textContent   = 'Join logrodzyni — it\'s free';
+    } else if (tabId === 'pw') {
+      if (title) title.textContent = 'Welcome back';
+      if (sub)   sub.textContent   = 'Sign in to your control plane';
+    }
   });
 });
 
@@ -768,23 +802,25 @@ function renderDoc(key) {
 const DOCS = {
   intro: {
     title: 'Introduction',
-    body: `<h3>What is Logo?</h3>
-<p>Logo is a <strong>unified control plane</strong> for distributed infrastructure. It combines intelligent proxy routing, distributed shard management, multi-region holographic replication, and operational process orchestration into a single, beautiful interface.</p>
-<h4>Core Concepts</h4>
+    body: `<h3>What is logrodzyni?</h3>
+<p>logrodzyni is a <strong>universal-purpose acceleration platform</strong> — an integrated system delivering a high-performance proxy engine, a distributed shard framework, an experimental programming language (HoloLang), and an intelligent operating canvas, all governed from one interface.</p>
+<h4>The Four Pillars</h4>
 <ul>
-  <li><strong>Proxy Layer</strong> — L4/L7 traffic routing with mTLS, ACL enforcement, and dynamic upstream management.</li>
-  <li><strong>Shard Manager</strong> — Automatic data partitioning using consistent hashing with zero-downtime rebalancing.</li>
-  <li><strong>Holography</strong> — Multi-region state replication with causal consistency guarantees.</li>
-  <li><strong>Operational Systems</strong> — Process orchestration, runbook automation, and ML-powered alerting.</li>
+  <li><strong>Proxy Effective Engine (logrodzyni)</strong> — L4/L7 traffic routing with mTLS, real-time ACL enforcement, and dynamic upstream cluster management. The core relay powering every hop.</li>
+  <li><strong>Shard Framework — All-Round</strong> — Distributed data partitioning using tensor objects, graph-collected data, and encrypted block records. Tensors carry data; shards coordinate the network-regulated exchange.</li>
+  <li><strong>HoloLang</strong> — An experimental programming language for processing pipelines and device-level programming. Ships with its own native compiler. Methodology-first, kaizen-inspired, macro-mapping aware.</li>
+  <li><strong>Canvas IDE / Operating Systems</strong> — Collects all pillars. Machine Learning and Neural Networks built into a Domain Specific Language, C Preprocessor integration, and Proto-based extensibility.</li>
 </ul>
 <h4>Architecture</h4>
-<p>Logo uses a layered circuit model: <code>Ingress Gateway → Relay Nodes → Egress Node → Policy Engine</code>. All inter-service communication is protected by mTLS with short-lived leaf certificates issued by the shared-security CA.</p>`
+<p>logrodzyni uses a layered circuit model: <code>Ingress Gateway → Relay Nodes → Egress Node → Policy Engine</code>. All inter-service communication is protected by mTLS with short-lived leaf certificates issued by the shared-security CA.</p>
+<h4>Status</h4>
+<p>The project is currently in active development and has not yet been publicly released. Documentation is being filled in progressively as features stabilise. <em>Watch this space for updates.</em></p>`
   },
   quickstart: {
     title: 'Quickstart',
     body: `<h3>Get Started in Minutes</h3>
 <h4>1. Create your account</h4>
-<p>Click <strong>Get Started</strong> on the landing page, choose a username and password (min 8 chars). Your account is provisioned with <code>viewer</code> role. An admin can elevate your role.</p>
+<p>Click <strong>Get Started</strong> on the landing page or <strong>Register</strong> in the sign-in panel. Choose a username (3–32 chars) and a password (minimum 8 characters). No admin approval required — your account is ready immediately with <code>viewer</code> role. An admin can elevate your role to <code>operator</code> or <code>admin</code>.</p>
 <h4>2. Register your first node</h4>
 <pre>POST /api/nodes
 {
@@ -801,7 +837,7 @@ const DOCS = {
   "priority": 10
 }</pre>
 <h4>4. Obtain a JWT</h4>
-<p>Use the built-in <strong>JWT Creator</strong> page to mint and sign tokens, or call <code>POST /api/auth/login</code>.</p>`
+<p>Use the built-in <strong>JWT Creator</strong> page to mint and sign tokens, or call <code>POST /api/auth/login</code> directly.</p>`
   },
   'auth-doc': {
     title: 'Authentication',
@@ -811,23 +847,26 @@ const DOCS = {
 <pre>POST /api/auth/login
 { "username": "admin", "password": "secret" }</pre>
 <h4>SHA-256 Key</h4>
-<p>Authenticate with a 64-char hex SHA-256 key. The key is hashed client-side before transmission.</p>
+<p>Authenticate with a 64-char hex SHA-256 key. The key is hashed client-side via Web Crypto before transmission.</p>
 <pre>POST /api/auth/login/sha256
 { "username": "operator", "key": "&lt;hex&gt;" }</pre>
 <h4>MetaMask / Wallet</h4>
-<p>EIP-191 challenge-response authentication. Request a challenge, sign with <code>personal_sign</code>, submit the signature.</p>
+<p>EIP-191 challenge-response authentication. Request a challenge, sign with <code>personal_sign</code>, submit the signature. No gas or transaction required.</p>
 <h4>Guest</h4>
-<p>Ephemeral read-only viewer token. Expires in 2 hours. No credentials required.</p>`
+<p>Ephemeral read-only viewer token. Expires in 2 hours. No credentials required. No account created.</p>
+<h4>Session Persistence</h4>
+<p>Your session token is stored in <code>localStorage</code> and survives browser restarts. Sign out explicitly to clear it.</p>`
   },
   'register-doc': {
     title: 'Account Registration',
     body: `<h3>Creating an Account</h3>
-<p>Self-registration is available to anyone. New accounts receive the <code>viewer</code> role by default.</p>
+<p>Self-registration is open to anyone. <strong>No admin approval required.</strong> New accounts receive the <code>viewer</code> role by default.</p>
 <h4>Requirements</h4>
 <ul>
   <li>Username: 3–32 characters, alphanumeric, hyphens, underscores</li>
   <li>Password: minimum 8 characters</li>
   <li>Display name: optional, 1–64 characters</li>
+  <li>Reserved usernames (e.g. <code>guest</code>) are not available for self-registration</li>
 </ul>
 <h4>API</h4>
 <pre>POST /api/auth/register
@@ -836,12 +875,14 @@ const DOCS = {
   "password": "secure-pass",
   "display_name": "Alice"
 }</pre>
-<p>Returns a JWT with <code>role: "viewer"</code> on success. An administrator can promote the account to <code>operator</code> or <code>admin</code>.</p>`
+<p>Returns a JWT with <code>role: "viewer"</code> on success. An administrator can promote the account to <code>operator</code> or <code>admin</code>.</p>
+<h4>Philosophy</h4>
+<p>Every repository owner controls their own infrastructure. Open registry — free for all. No centralised gating.</p>`
   },
   'proxy-doc': {
     title: 'Proxy Layer',
-    body: `<h3>Proxy Layer</h3>
-<p>The proxy layer handles all incoming traffic, applies ACL policies, performs TLS termination, and load-balances across registered upstream nodes.</p>
+    body: `<h3>Proxy Effective Engine — logrodzyni</h3>
+<p>The proxy layer is the core relay of logrodzyni. It handles all incoming traffic, applies ACL policies, performs TLS termination, and load-balances across registered upstream nodes.</p>
 <h4>Node Roles</h4>
 <ul>
   <li><code>ingress</code> — Public-facing entry point, handles TLS + client auth.</li>
@@ -849,20 +890,31 @@ const DOCS = {
   <li><code>egress</code> — Connects to the final upstream destination.</li>
 </ul>
 <h4>Protocols</h4>
-<p>SOCKS5 (RFC 1928) and HTTP CONNECT on configurable ports. Bidirectional async relay using Boost.Asio epoll I/O.</p>`
+<p>SOCKS5 (RFC 1928) and HTTP CONNECT on configurable ports. Bidirectional async relay using Boost.Asio epoll I/O. Up to 10,000 concurrent sessions per relay node.</p>
+<h4>Performance</h4>
+<p>Target: &lt;5ms P99 overhead per hop; &lt;50ms end-to-end for a 3-hop circuit; 1 Gbps+ aggregate throughput.</p>`
   },
   'shards-doc': {
-    title: 'Shard Manager',
-    body: `<h3>Shard Manager</h3>
-<p>Automatic data partitioning with consistent hashing ensures even distribution across all shard nodes.</p>
+    title: 'Shard Framework',
+    body: `<h3>Shard Framework — All-Round</h3>
+<p>The Shard Framework is the distributed data backbone of logrodzyni. It provides automatic data partitioning using consistent hashing and introduces a <strong>tensor-based object model</strong> for data exchange across the network.</p>
+<h4>Data Model</h4>
+<ul>
+  <li><strong>Tensor objects</strong> — A tensor is an object with assigned data. When two tensors exist in the same environment, they share the same underlying data. Think of it like assigning an object reference — same environment, same data.</li>
+  <li><strong>Graph-collected data</strong> — Tensors collect data from graphs. Graph nodes represent data relationships; edges encode the flow between tensors.</li>
+  <li><strong>Blocks</strong> — A block registers graph and shard data, then persistently saves it in <code>[~]</code> encrypted form — safe for public distribution under kaizen/lean principles.</li>
+  <li><strong>Attribute-driven discovery</strong> — Tensors carry attributes that define what data they hold. When tensors with matching attributes find each other across the network, they exchange data via a network-regulated method. Open registry — no centralised coordinator.</li>
+</ul>
 <h4>Key Features</h4>
 <ul>
   <li>Consistent hashing ring with virtual nodes</li>
   <li>Zero-downtime rebalancing triggered by node join/leave</li>
   <li>Cross-shard query routing at the gateway layer</li>
   <li>Hot-shard detection and automatic split</li>
-  <li>Compaction and garbage collection scheduling</li>
-</ul>`
+  <li>Macro and algorithm mappings for record persistence</li>
+  <li>Encrypted block storage — <code>[~]</code> format</li>
+</ul>
+<p><em>📋 Full tensor specification and block format — coming soon when the project is publicly released.</em></p>`
   },
   'holo-doc': {
     title: 'Holography',
@@ -873,34 +925,72 @@ const DOCS = {
   <li><code>causal</code> — Reads always reflect causally prior writes. Default for user-state projections.</li>
   <li><code>eventual</code> — Best-effort propagation. Suitable for policy mirrors and configuration data.</li>
   <li><code>strong</code> — Linearizable reads. Use for financial or critical coordination data.</li>
-</ul>`
+</ul>
+<h4>Relationship to HoloLang</h4>
+<p>HoloLang, the experimental processing language, takes its name and some of its tensor-sharing semantics from this holographic replication model. See the <strong>HoloLang</strong> section for details on the language itself.</p>`
+  },
+  'hololang-doc': {
+    title: 'HoloLang',
+    body: `<h3>HoloLang — Experimental Language</h3>
+<p>HoloLang is an experimental programming language purpose-built for <strong>processing pipelines</strong> and <strong>device-level programming</strong>. It ships with its own native compiler and follows a deliberate, methodology-first approach to language and system design.</p>
+<h4>Design Philosophy</h4>
+<ul>
+  <li>Kaizen-inspired incremental design — every construct has a minimal, deliberate purpose.</li>
+  <li>Lean programming model — no waste; every token serves the pipeline.</li>
+  <li>Macro and algorithm mappings baked into the language grammar.</li>
+  <li>First-class support for tensor-like data objects with graph-aware attributes.</li>
+  <li>Open registry semantics — free for all, no admin gating.</li>
+</ul>
+<h4>Core Concepts</h4>
+<ul>
+  <li><strong>Tensors as objects</strong> — Assign data to a tensor; sharing the same environment means sharing the same data.</li>
+  <li><strong>Attribute-driven networking</strong> — Tensors discover peers by matching attributes and exchange data via network-regulated channels.</li>
+  <li><strong>Encrypted records</strong> — All shard/tensor data is persisted in <code>[~]</code> encrypted form for safe public distribution.</li>
+  <li><strong>Macro mappings</strong> — Algorithmic patterns encoded as macros enable safe, repeatable transformations across devices.</li>
+</ul>
+<h4>Compiler</h4>
+<p>The HoloLang compiler is a native toolchain purpose-built for the language, targeting processing units and device-level execution environments. The compiler is currently in active development.</p>
+<p><em>📋 Full language specification, grammar, and compiler binaries — coming soon when the project is publicly released.</em></p>`
   },
   'os-doc': {
-    title: 'Operational Systems',
-    body: `<h3>Operational Systems</h3>
-<p>Real-time process orchestration, resource scheduling, and intelligent runbook automation across your entire fleet.</p>
-<h4>Capabilities</h4>
+    title: 'Canvas IDE & Oper. Systems',
+    body: `<h3>Canvas IDE — Operating Systems</h3>
+<p>The Operating Systems pillar collects all four logrodzyni components and delivers them through <strong>Canvas IDE</strong> — an integrated development environment with Machine Learning and Neural Networks built directly into its Domain Specific Language.</p>
+<h4>Canvas IDE</h4>
 <ul>
-  <li>Process lifecycle management (start, stop, restart, watch)</li>
+  <li><strong>Domain Specific Language (DSL)</strong> — Purpose-built for expressing proxy routing, shard topology, holographic projections, and ML pipeline configuration in one unified grammar.</li>
+  <li><strong>Machine Learning built-in</strong> — Training, inference, and anomaly detection are first-class language constructs, not bolted-on libraries.</li>
+  <li><strong>Neural Network primitives</strong> — Graph-based NN definitions directly in the IDE grammar, compatible with the Shard tensor model.</li>
+  <li><strong>C Preprocessor integration</strong> — Macro expansion and conditional compilation at the IDE level for zero-overhead abstractions.</li>
+  <li><strong>Proto extensibility</strong> — Protocol Buffer definitions for inter-service communication schemas, enabling typed cross-component contracts.</li>
+</ul>
+<h4>Current Capabilities</h4>
+<ul>
+  <li>Real-time process orchestration and resource scheduling</li>
   <li>CPU/memory threshold alerting with ML anomaly baseline</li>
   <li>Automated runbook execution on alert trigger</li>
   <li>Cron-style job scheduling with distributed locking</li>
-</ul>`
+</ul>
+<p><em>📋 Canvas IDE full specification, language grammar, and IDE release — coming soon when the project is publicly released.</em></p>`
   },
   'api-auth': {
     title: 'Auth API Reference',
     body: `<h3>Auth Endpoints</h3>
-<pre>POST /api/auth/register      — Create account
+<pre>POST /api/auth/register      — Create account (open, no approval required)
 POST /api/auth/login         — Password login
 POST /api/auth/login/sha256  — SHA-256 key login
-GET  /api/auth/wallet/challenge — Wallet challenge
-POST /api/auth/wallet/verify — Wallet signature verify
-POST /api/auth/guest         — Guest token
-POST /api/auth/logout        — Logout (discard token)
-GET  /api/account            — Get profile (auth required)
-PATCH /api/account           — Update profile / password</pre>
+GET  /api/auth/wallet/challenge — Request wallet challenge nonce
+POST /api/auth/wallet/verify — Verify wallet signature (EIP-191)
+POST /api/auth/guest         — Guest token (read-only, 2h TTL)
+POST /api/auth/logout        — Logout (client discards token)
+GET  /api/account            — Get profile (auth required, not guest)
+PATCH /api/account           — Update profile / change password</pre>
 <h4>Response</h4>
-<p>All auth endpoints return <code>{ token, role, username, expiresIn }</code> on success. Include the token as <code>Authorization: Bearer &lt;token&gt;</code> in subsequent requests.</p>`
+<p>All auth endpoints return <code>{ token, role, username, expiresIn }</code> on success. Include the token as <code>Authorization: Bearer &lt;token&gt;</code> in subsequent requests.</p>
+<h4>Roles</h4>
+<pre>viewer   — read-only access (default for new accounts and guests)
+operator — read/write nodes, sessions, policies
+admin    — full CRUD including user management</pre>`
   },
   'api-nodes': {
     title: 'Nodes API',
@@ -927,13 +1017,13 @@ DELETE /api/nodes/:id    — Delete node (admin)</pre>
 <h4>Best Practices</h4>
 <ul>
   <li>Always set an <code>exp</code> claim. Short-lived tokens (≤8h) reduce blast radius on theft.</li>
-  <li>Store tokens in <code>httpOnly</code> cookies or memory — never <code>localStorage</code>.</li>
+  <li>Store tokens in <code>httpOnly</code> cookies or memory — never <code>localStorage</code> in untrusted environments. logrodzyni uses <code>localStorage</code> for convenience; evaluate your own threat model.</li>
   <li>Always verify the <code>alg</code> header server-side and reject <code>alg:none</code>.</li>
   <li>Rotate signing secrets regularly. Keep an old-key grace period for in-flight tokens.</li>
   <li>Never embed sensitive PII in the payload — it's only base64, not encrypted.</li>
   <li>Use short claim names (<code>sub</code>, <code>iss</code>, <code>aud</code>) per RFC 7519.</li>
 </ul>
-<h4>Logo's JWT Structure</h4>
+<h4>logrodzyni JWT Structure</h4>
 <pre>Header: { "alg": "HS256", "typ": "JWT" }
 Payload: { "id", "username", "role", "authType", "iat", "exp" }</pre>`
   },
