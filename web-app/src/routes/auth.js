@@ -157,6 +157,41 @@ router.post('/wallet/verify', (req, res) => {
   res.json({ token, role: user.role, username: user.username, expiresIn: config.jwt.expiresIn });
 });
 
+// ── POST /api/auth/register ──────────────────────────────────────────────────
+router.post('/register', async (req, res) => {
+  const { username, password, display_name } = req.body || {};
+  if (!username || !password)
+    return res.status(400).json({ error: 'username and password are required' });
+  if (username.length < 3 || username.length > 32)
+    return res.status(400).json({ error: 'Username must be 3–32 characters' });
+  if (!/^[a-z0-9_-]+$/i.test(username))
+    return res.status(400).json({ error: 'Username may only contain letters, numbers, hyphens and underscores' });
+  if (password.length < 8)
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
+
+  if (Users.findByUsername(username))
+    return res.status(409).json({ error: 'Username already taken' });
+
+  const id            = uuidv4();
+  const password_hash = await bcrypt.hash(password, 12);
+  const newUser = {
+    id,
+    username,
+    display_name: (typeof display_name === 'string' && display_name.trim()) || username,
+    role:         'viewer',
+    auth_type:    'password',
+    password_hash,
+    sha256_key:   null,
+    wallet_address: null,
+  };
+  Users.create(newUser);
+
+  const tokenStr = issueToken({ id, username, role: 'viewer', auth_type: 'password' });
+  AuditLog.append('register', username, null, 'success', { ip: req.ip });
+  logger.info({ msg: 'User registered', username, role: 'viewer' });
+  res.status(201).json({ token: tokenStr, role: 'viewer', username, expiresIn: config.jwt.expiresIn });
+});
+
 // ── POST /api/auth/logout ─────────────────────────────────────────────────────
 router.post('/logout', (req, res) => {
   res.json({ message: 'Logged out. Discard your token.' });
