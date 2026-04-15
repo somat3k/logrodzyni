@@ -68,3 +68,72 @@ describe('Authentication', () => {
     expect(res.body.challenge).toContain('Nonce:');
   });
 });
+
+describe('Registration', () => {
+  test('POST /api/auth/register - success', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ username: 'newuser1', password: 'securepass', display_name: 'New User' });
+    expect(res.status).toBe(201);
+    expect(res.body.token).toBeDefined();
+    expect(res.body.role).toBe('viewer');
+    expect(res.body.username).toBe('newuser1');
+  });
+
+  test('POST /api/auth/register - duplicate username returns 409', async () => {
+    await request(app)
+      .post('/api/auth/register')
+      .send({ username: 'dupuser', password: 'securepass' });
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ username: 'dupuser', password: 'anotherpass' });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/already taken/i);
+  });
+
+  test('POST /api/auth/register - missing password returns 400', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ username: 'nopassuser' });
+    expect(res.status).toBe(400);
+  });
+
+  test('POST /api/auth/register - password too short returns 400', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ username: 'shortpwuser', password: 'short' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/8 character/i);
+  });
+
+  test('POST /api/auth/register - username too short returns 400', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ username: 'ab', password: 'validpassword' });
+    expect(res.status).toBe(400);
+  });
+
+  test('POST /api/auth/register - reserved username (guest) returns 400', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ username: 'guest', password: 'validpassword' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/reserved/i);
+  });
+
+  test('POST /api/auth/register - display_name too long returns 400', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ username: 'longname99', password: 'validpassword', display_name: 'A'.repeat(65) });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/64/);
+  });
+
+  test('POST /api/auth/register - display_name with whitespace is trimmed and accepted', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ username: 'trimuser1', password: 'validpassword', display_name: '  Alice  ' });
+    expect(res.status).toBe(201);
+    expect(res.body.token).toBeDefined();
+  });
+});
