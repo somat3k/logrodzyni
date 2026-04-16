@@ -1,6 +1,6 @@
 # API Specification
 
-Base URL: `https://control.example.com/api`
+Base URL: `https://control.example.com`
 
 All endpoints except auth/registration and health probes require a JWT Bearer token in `Authorization: Bearer <token>`.
 
@@ -8,7 +8,7 @@ All endpoints except auth/registration and health probes require a JWT Bearer to
 
 ## Authentication
 
-### POST /auth/register
+### POST /api/auth/register
 
 Open registration — no admin approval required.
 
@@ -31,7 +31,7 @@ Errors: `400` (validation), `409` (username already taken)
 
 ---
 
-### POST /auth/login
+### POST /api/auth/login
 
 Password authentication.
 
@@ -49,7 +49,7 @@ Errors: `400` (missing fields), `401` (bad credentials)
 
 ---
 
-### POST /auth/login/sha256
+### POST /api/auth/login/sha256
 
 SHA-256 key authentication. Hash the key client-side (Web Crypto) before sending.
 
@@ -67,7 +67,7 @@ Errors: `400`, `401`
 
 ---
 
-### GET /auth/wallet/challenge
+### GET /api/auth/wallet/challenge
 
 Request an EIP-191 challenge nonce for MetaMask / wallet authentication.
 
@@ -82,7 +82,7 @@ Errors: `400` (invalid Ethereum address)
 
 ---
 
-### POST /auth/wallet/verify
+### POST /api/auth/wallet/verify
 
 Submit signed wallet challenge.
 
@@ -98,7 +98,7 @@ Response `200`:
 
 ---
 
-### POST /auth/guest
+### POST /api/auth/guest
 
 Ephemeral read-only viewer token. 2h TTL. No account created.
 
@@ -109,7 +109,7 @@ Response `200`:
 
 ---
 
-### POST /auth/logout
+### POST /api/auth/logout
 
 Stateless; client discards the token from `localStorage`.
 

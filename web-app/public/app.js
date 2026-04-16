@@ -25,7 +25,9 @@ async function api(method, path, body) {
   if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    // Auto-logout when a stored token is rejected by a non-auth endpoint (expired / revoked)
+    // Auto-logout when a stored token is rejected by a non-auth endpoint (expired / revoked).
+    // Mark the error as sessionExpired so callers can skip their generic error UI and avoid
+    // showing a duplicate/conflicting message alongside the "Session expired" toast.
     if (res.status === 401 && token && !path.startsWith('/auth/')) {
       clearAuth();
       const app     = document.getElementById('app');
@@ -35,6 +37,7 @@ async function api(method, path, body) {
       if (fab)     fab.style.display = 'none';
       if (landing) landing.style.display = '';
       toast('Session expired — please sign in again', 'err');
+      throw Object.assign(new Error('Session expired'), { status: 401, sessionExpired: true });
     }
     throw Object.assign(new Error(data.error || res.statusText), { status: res.status });
   }
@@ -455,6 +458,7 @@ async function loadDashboard() {
       tbody.appendChild(tr);
     });
   } catch (e) {
+    if (e.sessionExpired) return; // toast already shown by api()
     const a = document.getElementById('dash-alert');
     if (a) { a.className = 'alert alert-err'; a.textContent = 'Failed to load dashboard: ' + e.message; }
   }
@@ -474,6 +478,7 @@ async function loadNodes() {
   try {
     return await api('GET', '/nodes');
   } catch (e) {
+    if (e.sessionExpired) return null;
     showPageAlert('nodes-alert', 'Error: ' + e.message, 'err');
     return null;
   }
@@ -538,6 +543,7 @@ async function deleteNode(id, cb) {
     if (ns) { renderNodes(ns); if (cb) cb(); }
     toast('Node deleted', 'ok');
   } catch (e) {
+    if (e.sessionExpired) return;
     showPageAlert('nodes-alert', 'Delete failed: ' + e.message, 'err');
   }
 }
@@ -567,7 +573,7 @@ document.getElementById('n-save-btn')?.addEventListener('click', async () => {
     toast('Node registered', 'ok');
     const ns = await loadNodes();
     if (ns) { renderNodes(ns); renderProxyNodes(ns); }
-  } catch (e) { toast('Error: ' + e.message, 'err'); }
+  } catch (e) { if (!e.sessionExpired) toast('Error: ' + e.message, 'err'); }
 });
 
 // ── Sessions ──────────────────────────────────────────────────────────────────
@@ -637,7 +643,7 @@ document.getElementById('p-save-btn')?.addEventListener('click', async () => {
     closeModal('modal-policy');
     toast('Policy created', 'ok');
     loadPolicies();
-  } catch (e) { toast('Error: ' + e.message, 'err'); }
+  } catch (e) { if (!e.sessionExpired) toast('Error: ' + e.message, 'err'); }
 });
 
 // ── Audit ─────────────────────────────────────────────────────────────────────
@@ -744,7 +750,7 @@ async function loadAccount() {
     // SHA-256 token section: only relevant for SHA-256 accounts
     const shaSection = document.getElementById('acc-sha-section');
     if (shaSection) shaSection.style.display = u.auth_type === 'sha256_key' ? '' : 'none';
-  } catch (e) { toast('Failed to load account: ' + e.message, 'err'); }
+  } catch (e) { if (!e.sessionExpired) toast('Failed to load account: ' + e.message, 'err'); }
 }
 
 document.getElementById('acc-save-btn')?.addEventListener('click', async () => {
@@ -755,7 +761,7 @@ document.getElementById('acc-save-btn')?.addEventListener('click', async () => {
     if(msgEl) { msgEl.textContent='Saved!'; setTimeout(()=>{msgEl.textContent='';},2500); }
     toast('Profile updated', 'ok');
     loadAccount();
-  } catch (e) { toast('Error: ' + e.message, 'err'); }
+  } catch (e) { if (!e.sessionExpired) toast('Error: ' + e.message, 'err'); }
 });
 
 document.getElementById('acc-pw-btn')?.addEventListener('click', async () => {
@@ -772,7 +778,7 @@ document.getElementById('acc-pw-btn')?.addEventListener('click', async () => {
     if(msgEl) { msgEl.textContent='Updated!'; setTimeout(()=>{msgEl.textContent='';},2500); }
     toast('Password changed', 'ok');
     ['acc-cur-pw','acc-new-pw','acc-conf-pw'].forEach(id => { const el2=document.getElementById(id); if(el2)el2.value=''; });
-  } catch (e) { errEl.textContent = e.message; }
+  } catch (e) { if (!e.sessionExpired) errEl.textContent = e.message; }
 });
 
 document.getElementById('acc-copy-sha')?.addEventListener('click', () => {
