@@ -3,6 +3,7 @@
 const express = require('express');
 const bcrypt  = require('bcryptjs');
 const { db, Users, AuditLog } = require('../db');
+const logger = require('../utils/logger');
 const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
@@ -10,8 +11,22 @@ router.use(authenticate);
 
 // ── GET /api/account ── return profile for the logged-in user ─────────────────
 router.get('/', (req, res) => {
-  if (req.user.guest)
-    return res.status(403).json({ error: 'Guest accounts do not have a persistent profile' });
+  if (req.user.guest) {
+    const guest = Users.findById(req.user.id);
+    if (!guest) {
+      logger.warn({ msg: 'Guest profile missing in database; using token fallback', guestId: req.user.id });
+    }
+    return res.json({
+      id:             guest?.id || req.user.id,
+      username:       guest?.username || req.user.username || 'guest',
+      display_name:   guest?.display_name || 'Guest',
+      role:           guest?.role || 'viewer',
+      auth_type:      'guest',
+      wallet_address: null,
+      created_at:     guest?.created_at || null,
+      guest:          true,
+    });
+  }
   const user = Users.findById(req.user.id);
   if (!user) return res.status(404).json({ error: 'User not found' });
   res.json({
@@ -28,6 +43,7 @@ router.get('/', (req, res) => {
 // ── PATCH /api/account ── update display name or password ────────────────────
 router.patch('/', async (req, res, next) => {
   try {
+    if (req.user.guest) return res.status(403).json({ error: 'Guest accounts cannot be modified' });
     const { display_name, current_password, new_password } = req.body || {};
     const user = Users.findById(req.user.id);
     if (!user) return res.status(404).json({ error: 'User not found' });

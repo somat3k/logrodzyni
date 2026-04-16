@@ -100,11 +100,11 @@ Response `200`:
 
 ### POST /api/auth/guest
 
-Ephemeral read-only viewer token. 2h TTL. No account created.
+Read-only viewer token. 2h TTL. A guest profile is created and persisted for the issued token identity.
 
 Response `200`:
 ```json
-{ "token": "<JWT>", "role": "viewer", "guest": true, "expiresIn": "2h" }
+{ "token": "<JWT>", "role": "viewer", "username": "guest_ab12cd", "guest": true, "expiresIn": "2h" }
 ```
 
 ---
@@ -119,7 +119,7 @@ Stateless; client discards the token from `localStorage`.
 
 ### GET /api/account
 
-Roles: authenticated users (not guest)
+Roles: authenticated users and guest tokens
 
 Response `200`:
 ```json
@@ -132,7 +132,7 @@ Response `200`:
 }
 ```
 
-Errors: `401` (no token), `403` (guest token)
+Errors: `401` (no token)
 
 ---
 
@@ -292,4 +292,3 @@ The following features are planned for future releases:
 - **WebAuthn/FIDO2** — hardware key authentication
 - **SAML 2.0 / OIDC** — enterprise SSO integration
 - **Prometheus metrics** — `/metrics` endpoint on `:9090`
-
