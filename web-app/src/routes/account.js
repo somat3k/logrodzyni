@@ -15,7 +15,7 @@ router.get('/', (req, res) => {
     return res.json({
       id:             guest?.id || req.user.id,
       username:       guest?.username || req.user.username || 'guest',
-      display_name:   guest?.display_name || req.user.username || 'Guest',
+      display_name:   guest?.display_name || 'Guest',
       role:           guest?.role || 'viewer',
       auth_type:      'guest',
       wallet_address: null,

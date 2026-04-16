@@ -11,6 +11,7 @@ const fs      = require('fs');
 const crypto  = require('crypto');
 const bcrypt  = require('bcryptjs');
 const Database = require('better-sqlite3');
+const { v4: uuidv4 } = require('uuid');
 
 const DB_PATH = process.env.DB_PATH
   || path.join(__dirname, '..', 'data', 'proxy-circuit.db');
@@ -19,6 +20,7 @@ const DB_PATH = process.env.DB_PATH
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
 const db = new Database(DB_PATH);
+const MAX_GUEST_CREATION_RETRIES = 5;
 
 // Enable WAL mode for better concurrent read performance.
 db.pragma('journal_mode = WAL');
@@ -134,11 +136,11 @@ const Users = {
     `).run(user),
 
   createGuest: () => {
-    const { v4: uuidv4 } = require('uuid');
-    for (let i = 0; i < 5; i += 1) {
-      const id = `guest_${uuidv4().replace(/-/g, '').slice(0, 12)}`;
-      const username = `guest_${id.slice(-6)}`;
-      const displayName = `Guest ${id.slice(-6)}`;
+    for (let i = 0; i < MAX_GUEST_CREATION_RETRIES; i += 1) {
+      const guestKey = uuidv4().replace(/-/g, '').slice(0, 12);
+      const id = `guest_${guestKey}`;
+      const username = `guest_${guestKey.slice(0, 6)}`;
+      const displayName = `Guest ${guestKey.slice(0, 6)}`;
       try {
         db.prepare(`
           INSERT INTO users (id, username, display_name, role, auth_type, guest, password_hash, sha256_key, wallet_address)
@@ -157,7 +159,6 @@ const Users = {
   upsertWalletUser: (address) => {
     const existing = db.prepare('SELECT * FROM users WHERE wallet_address = ? COLLATE NOCASE').get(address);
     if (existing) return existing;
-    const { v4: uuidv4 } = require('uuid');
     const id = uuidv4();
     db.prepare(`
       INSERT INTO users (id, username, display_name, role, auth_type, wallet_address)
