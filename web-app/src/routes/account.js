@@ -3,6 +3,7 @@
 const express = require('express');
 const bcrypt  = require('bcryptjs');
 const { db, Users, AuditLog } = require('../db');
+const logger = require('../utils/logger');
 const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
@@ -12,6 +13,9 @@ router.use(authenticate);
 router.get('/', (req, res) => {
   if (req.user.guest) {
     const guest = Users.findById(req.user.id);
+    if (!guest) {
+      logger.warn({ msg: 'Guest profile missing in database; using token fallback', guestId: req.user.id });
+    }
     return res.json({
       id:             guest?.id || req.user.id,
       username:       guest?.username || req.user.username || 'guest',

@@ -148,7 +148,7 @@ const Users = {
         `).run(id, username, displayName, 'viewer', 'guest', 1, null, null, null);
         return db.prepare('SELECT * FROM users WHERE id = ?').get(id);
       } catch (err) {
-        if (err.code === 'SQLITE_CONSTRAINT_UNIQUE' || (err.message && err.message.includes('UNIQUE')))
+        if (err.code === 'SQLITE_CONSTRAINT_UNIQUE')
           continue;
         throw err;
       }
