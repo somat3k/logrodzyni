@@ -21,7 +21,12 @@ async function api(method, path, body) {
   const opts = { method, headers: { 'Content-Type': 'application/json' } };
   if (token) opts.headers['Authorization'] = 'Bearer ' + token;
   if (body)  opts.body = JSON.stringify(body);
-  const res = await fetch((window.__API_BASE__ || '') + '/api' + path, opts);
+  const configuredBase = window.__API_BASE__;
+  const base = configuredBase
+    ? configuredBase.replace(/\/+$/, '') + '/'
+    : window.location.origin + '/';
+  const url = new URL(`api${path}`, base);
+  const res = await fetch(url.toString(), opts);
   if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw Object.assign(new Error(data.error || res.statusText), { status: res.status });
