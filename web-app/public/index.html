@@ -951,7 +951,38 @@ tbody td:first-child{color:var(--white);font-weight:500}
 <div id="toasts"></div>
 <div class="fab" id="fab" style="display:none"><button class="fab-main" title="Quick actions">＋</button></div>
 
-<script src="config.js"></script>
-<script src="app.js"></script>
+<script>
+  window.__API_BASE__ = window.__API_BASE__ || "";
+
+  (function () {
+    function loadScript(src, onComplete) {
+      var script = document.createElement("script");
+      script.src = src;
+      script.onload = function () {
+        if (onComplete) onComplete();
+      };
+      script.onerror = function () {
+        if (onComplete) onComplete();
+      };
+      document.body.appendChild(script);
+    }
+
+    function loadApp() {
+      loadScript("app.js");
+    }
+
+    fetch("config.js", { method: "HEAD" })
+      .then(function (response) {
+        if (response.ok) {
+          loadScript("config.js", loadApp);
+        } else {
+          loadApp();
+        }
+      })
+      .catch(function () {
+        loadApp();
+      });
+  })();
+</script>
 </body>
 </html>
