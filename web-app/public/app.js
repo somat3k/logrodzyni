@@ -22,9 +22,10 @@ async function api(method, path, body) {
   if (token) opts.headers['Authorization'] = 'Bearer ' + token;
   if (body)  opts.body = JSON.stringify(body);
   const configuredBase = window.__API_BASE__;
-  const endpointPath = configuredBase && /\/api\/?$/i.test(configuredBase)
-    ? path.replace(/^\/+/, '')
-    : `api${path}`;
+  const normalizedPath = String(path || '').replace(/^\/+/, '');
+  const endpointPath = configuredBase && /\/api\/?$/.test(configuredBase)
+    ? normalizedPath
+    : `api/${normalizedPath}`;
   const base = (configuredBase || window.location.origin).replace(/\/+$/, '') + '/';
   const url = new URL(endpointPath, base);
   const res = await fetch(url.toString(), opts);
