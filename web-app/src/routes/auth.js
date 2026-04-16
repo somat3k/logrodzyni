@@ -78,19 +78,14 @@ router.post('/login/sha256', (req, res) => {
 
 // ── POST /api/auth/guest ─────────────────────────────────────────────────────
 router.post('/guest', (req, res) => {
-  const guestUser = {
-    id: `guest_${uuidv4().slice(0, 8)}`,
-    username: 'guest',
-    role: 'viewer',
-    auth_type: 'guest',
-  };
+  const guestUser = Users.createGuest();
   const token = jwt.sign(
-    { id: guestUser.id, username: guestUser.username, role: guestUser.role, guest: true },
+    { id: guestUser.id, username: guestUser.username, role: guestUser.role, authType: guestUser.auth_type, guest: true },
     config.jwt.secret,
     { algorithm: 'HS256', expiresIn: '2h' }
   );
-  AuditLog.append('login', 'guest', null, 'success', { ip: req.ip, method: 'guest' });
-  res.json({ token, role: 'viewer', username: 'guest', expiresIn: '2h', guest: true });
+  AuditLog.append('login', guestUser.username, null, 'success', { ip: req.ip, method: 'guest' });
+  res.json({ token, role: guestUser.role, username: guestUser.username, expiresIn: '2h', guest: true });
 });
 
 // ── GET /api/auth/wallet/challenge  (request a sign challenge) ───────────────

@@ -133,6 +133,27 @@ const Users = {
       VALUES (@id, @username, @display_name, @role, @auth_type, @password_hash, @sha256_key, @wallet_address)
     `).run(user),
 
+  createGuest: () => {
+    const { v4: uuidv4 } = require('uuid');
+    for (let i = 0; i < 5; i += 1) {
+      const id = `guest_${uuidv4().replace(/-/g, '').slice(0, 12)}`;
+      const username = `guest_${id.slice(-6)}`;
+      const displayName = `Guest ${id.slice(-6)}`;
+      try {
+        db.prepare(`
+          INSERT INTO users (id, username, display_name, role, auth_type, guest, password_hash, sha256_key, wallet_address)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(id, username, displayName, 'viewer', 'guest', 1, null, null, null);
+        return db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+      } catch (err) {
+        if (err.code === 'SQLITE_CONSTRAINT_UNIQUE' || (err.message && err.message.includes('UNIQUE')))
+          continue;
+        throw err;
+      }
+    }
+    throw new Error('Failed to create unique guest account');
+  },
+
   upsertWalletUser: (address) => {
     const existing = db.prepare('SELECT * FROM users WHERE wallet_address = ? COLLATE NOCASE').get(address);
     if (existing) return existing;

@@ -44,12 +44,14 @@ describe('GET /api/account', () => {
     expect(res.body.display_name).toBe('Acc Test');
   });
 
-  test('returns 403 for guest token', async () => {
+  test('returns profile for guest token', async () => {
     const res = await request(app)
       .get('/api/account')
       .set('Authorization', 'Bearer ' + guestToken);
-    expect(res.status).toBe(403);
-    expect(res.body.error).toMatch(/guest/i);
+    expect(res.status).toBe(200);
+    expect(res.body.guest).toBe(true);
+    expect(res.body.auth_type).toBe('guest');
+    expect(res.body.username).toMatch(/^guest_/);
   });
 
   test('returns 401 without token', async () => {
@@ -163,5 +165,16 @@ describe('PATCH /api/account - password change', () => {
       .set('Authorization', 'Bearer ' + pwUserToken)
       .send({ new_password: 'somepassword123' });
     expect(res.status).toBe(400);
+  });
+});
+
+describe('PATCH /api/account - guest restrictions', () => {
+  test('returns 403 for guest token', async () => {
+    const res = await request(app)
+      .patch('/api/account')
+      .set('Authorization', 'Bearer ' + guestToken)
+      .send({ display_name: 'Guest Name' });
+    expect(res.status).toBe(403);
+    expect(res.body.error).toMatch(/guest/i);
   });
 });

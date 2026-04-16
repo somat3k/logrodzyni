@@ -38,6 +38,7 @@ describe('Authentication', () => {
     expect(res.status).toBe(200);
     expect(res.body.token).toBeDefined();
     expect(res.body.role).toBe('viewer');
+    expect(res.body.username).toMatch(/^guest_/);
     expect(res.body.guest).toBe(true);
   });
 

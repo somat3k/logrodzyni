@@ -1071,9 +1071,9 @@ POST /api/auth/login         — Password login
 POST /api/auth/login/sha256  — SHA-256 key login
 GET  /api/auth/wallet/challenge — Request wallet challenge nonce
 POST /api/auth/wallet/verify — Verify wallet signature (EIP-191)
-POST /api/auth/guest         — Guest token (read-only, 2h TTL)
+POST /api/auth/guest         — Guest token with persisted guest profile (read-only, 2h TTL)
 POST /api/auth/logout        — Logout (client discards token)
-GET  /api/account            — Get profile (auth required, not guest)
+GET  /api/account            — Get own profile (auth required, includes guest)
 PATCH /api/account           — Update profile / change password</pre>
 <h4>Response</h4>
 <p>All auth endpoints return <code>{ token, role, username, expiresIn }</code> on success. Include the token as <code>Authorization: Bearer &lt;token&gt;</code> in subsequent requests.</p>
