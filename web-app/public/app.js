@@ -30,7 +30,7 @@ async function api(method, path, body) {
     : `api/${normalizedPath}`;
   const base = normalizedConfiguredBase
     ? `${normalizedConfiguredBase}/`
-    : new URL('.', window.location.href).toString();
+    : `${new URL('.', window.location.href).toString().replace(/\/+$/, '')}/`;
   const url = new URL(endpointPath, base);
   const res = await fetch(url.toString(), opts);
   if (res.status === 204) return null;
