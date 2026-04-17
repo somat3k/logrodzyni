@@ -25,12 +25,13 @@ async function api(method, path, body) {
     ? ''
     : String(configuredBase).trim().replace(/\/+$/, '');
   const normalizedPath = String(path || '').replace(/^\/+/, '');
+  const ensureTrailingSlash = value => `${String(value || '').replace(/\/+$/, '')}/`;
   const endpointPath = normalizedConfiguredBase && /\/api$/.test(normalizedConfiguredBase)
     ? normalizedPath
     : `api/${normalizedPath}`;
   const base = normalizedConfiguredBase
-    ? `${normalizedConfiguredBase}/`
-    : `${new URL('.', window.location.href).toString().replace(/\/+$/, '')}/`;
+    ? ensureTrailingSlash(normalizedConfiguredBase)
+    : ensureTrailingSlash(new URL('.', window.location.href).toString());
   const url = new URL(endpointPath, base);
   const res = await fetch(url.toString(), opts);
   if (res.status === 204) return null;
