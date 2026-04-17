@@ -5,7 +5,6 @@
 let token    = localStorage.getItem('jwt')  || null;
 let userRole = localStorage.getItem('role') || null;
 let userName = localStorage.getItem('user') || null;
-let walletAddr = null;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const esc = v => String(v ?? '');
@@ -141,245 +140,38 @@ window.addEventListener('scroll', () => {
   if (nav) nav.classList.toggle('scrolled', window.scrollY > 30);
 });
 
-// ── Auth overlay ──────────────────────────────────────────────────────────────
-function openAuth(mode = 'login') {
-  const overlay = document.getElementById('auth-overlay');
-  const title   = document.getElementById('auth-title');
-  const sub     = document.getElementById('auth-sub');
-  if (mode === 'register') {
-    title.textContent = 'Create your account';
-    sub.textContent   = 'Join logrodzyni — free & open';
-    switchAuthTab('reg');
-  } else {
-    title.textContent = 'Welcome back';
-    sub.textContent   = 'Sign in to your control plane';
-    switchAuthTab('pw');
+// ── Landing actions ───────────────────────────────────────────────────────────
+async function enterApp() {
+  if (!token) {
+    const data = await api('POST', '/auth/guest', { ping: 'ping' });
+    setAuth(data);
   }
-  overlay.classList.add('open');
-  // Auto-focus first text input in the active panel
-  setTimeout(() => {
-    const panel = overlay.querySelector('.auth-panel.active');
-    const first = panel?.querySelector('input[type="text"], input[type="password"]');
-    if (first) first.focus();
-  }, 60);
-}
-function closeAuth() {
-  document.getElementById('auth-overlay').classList.remove('open');
+  showApp();
 }
 
-function switchAuthTab(tabId) {
-  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
-  const tab = document.querySelector(`.auth-tab[data-tab="${tabId}"]`);
-  if (tab) tab.classList.add('active');
-  document.getElementById('tab-' + tabId)?.classList.add('active');
-  const title = document.getElementById('auth-title');
-  const sub   = document.getElementById('auth-sub');
-  if (tabId === 'reg')  { if (title) title.textContent = 'Create your account'; if (sub) sub.textContent = 'Join logrodzyni — free & open'; }
-  if (tabId === 'pw')   { if (title) title.textContent = 'Welcome back';         if (sub) sub.textContent = 'Sign in to your control plane'; }
-  // Auto-focus first input in the newly active panel
-  setTimeout(() => {
-    const panel = document.getElementById('tab-' + tabId);
-    const first = panel?.querySelector('input[type="text"], input[type="password"]');
-    if (first) first.focus();
-  }, 40);
-}
-
-// Helper — set button loading state
-function btnLoading(btn, loading, originalText) {
-  if (loading) {
-    btn.disabled = true;
-    btn.dataset.originalText = btn.textContent;
-    btn.classList.add('btn-loading');
-    btn.textContent = originalText || btn.textContent;
-  } else {
-    btn.disabled = false;
-    btn.classList.remove('btn-loading');
-    btn.textContent = btn.dataset.originalText || btn.textContent;
-  }
-}
-
-// Helper — show auth error with shake
-function showAuthError(errEl, msg) {
-  errEl.textContent = msg;
-  errEl.classList.remove('shaking');
-  void errEl.offsetWidth; // reflow
-  errEl.classList.add('shaking');
-  setTimeout(() => errEl.classList.remove('shaking'), 400);
-}
-
-// Helper — validate required fields, mark them red, return true if all ok
-function requireFields(pairs) {
-  let ok = true;
-  pairs.forEach(([id, label]) => {
-    const inp = document.getElementById(id);
-    if (!inp) return;
-    const wrap = inp.closest('.field') || inp.parentElement;
-    if (!inp.value.trim()) {
-      wrap.classList.add('field-err');
-      ok = false;
-    } else {
-      wrap.classList.remove('field-err');
-    }
-  });
-  return ok;
-}
-
-// Landing CTAs
-document.getElementById('nav-signin')?.addEventListener('click', () => openAuth('login'));
-document.getElementById('nav-register')?.addEventListener('click', () => openAuth('register'));
-document.getElementById('hero-start')?.addEventListener('click', () => openAuth('register'));
-document.getElementById('hero-signin')?.addEventListener('click', () => openAuth('login'));
-document.getElementById('cta-start')?.addEventListener('click', () => openAuth('register'));
-document.getElementById('auth-close')?.addEventListener('click', closeAuth);
-document.getElementById('auth-overlay')?.addEventListener('click', e => {
-  if (e.target === document.getElementById('auth-overlay')) closeAuth();
+document.getElementById('nav-enter')?.addEventListener('click', async () => {
+  try { await enterApp(); } catch (e) { toast('Access failed: ' + e.message, 'err'); }
+});
+document.getElementById('hero-enter')?.addEventListener('click', async () => {
+  try { await enterApp(); } catch (e) { toast('Access failed: ' + e.message, 'err'); }
+});
+document.getElementById('cta-enter')?.addEventListener('click', async () => {
+  try { await enterApp(); } catch (e) { toast('Access failed: ' + e.message, 'err'); }
 });
 document.getElementById('nav-docs')?.addEventListener('click', e => {
   e.preventDefault();
-  if (token) { showApp(); navigate('docs'); }
-  else openAuth('login');
+  (async () => {
+    try { await enterApp(); navigate('docs'); } catch (err) { toast('Access failed: ' + err.message, 'err'); }
+  })();
 });
 
 // Service card launches
 document.querySelectorAll('.svc-card[data-launch]').forEach(card => {
-  card.addEventListener('click', () => {
+  card.addEventListener('click', async () => {
     const pg = card.dataset.launch;
-    if (token) { showApp(); navigate(pg); }
-    else openAuth('login');
+    try { await enterApp(); navigate(pg); } catch (err) { toast('Access failed: ' + err.message, 'err'); }
   });
 });
-
-// Auth tabs — use shared switchAuthTab helper
-document.querySelectorAll('.auth-tab').forEach(tab => {
-  tab.addEventListener('click', () => switchAuthTab(tab.dataset.tab));
-});
-
-// Auth panel cross-links (Register ↔ Sign In)
-document.querySelectorAll('.auth-link[data-switch-tab]').forEach(link => {
-  link.addEventListener('click', () => switchAuthTab(link.dataset.switchTab));
-});
-
-// ── Password login ────────────────────────────────────────────────────────────
-document.getElementById('pw-btn')?.addEventListener('click', async () => {
-  const btn      = document.getElementById('pw-btn');
-  const errEl    = document.getElementById('pw-err');
-  errEl.textContent = '';
-  // Remove field-err highlights on a new attempt
-  ['pw-user','pw-pass'].forEach(id => document.getElementById(id)?.closest('.field')?.classList.remove('field-err'));
-  if (!requireFields([['pw-user','Username'],['pw-pass','Password']])) {
-    showAuthError(errEl, 'Please enter your username and password.');
-    return;
-  }
-  const username = document.getElementById('pw-user').value.trim();
-  const password = document.getElementById('pw-pass').value;
-  btnLoading(btn, true);
-  try {
-    const data = await api('POST', '/auth/login', { username, password });
-    setAuth(data); closeAuth(); showApp();
-  } catch (e) {
-    btnLoading(btn, false);
-    showAuthError(errEl, e.message || 'Sign in failed. Check your credentials.');
-  }
-});
-['pw-user','pw-pass'].forEach(id =>
-  document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('pw-btn')?.click(); })
-);
-
-// ── SHA-256 login ─────────────────────────────────────────────────────────────
-document.getElementById('sha-btn')?.addEventListener('click', async () => {
-  const btn      = document.getElementById('sha-btn');
-  const username = document.getElementById('sha-user').value.trim();
-  const key      = document.getElementById('sha-key').value;
-  const errEl    = document.getElementById('sha-err');
-  errEl.textContent = '';
-  if (!username || !key) { showAuthError(errEl, 'Username and key are required'); return; }
-  let keyHex = key;
-  if (!/^[0-9a-f]{64}$/i.test(key)) {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key));
-    keyHex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-  }
-  btnLoading(btn, true);
-  try {
-    const data = await api('POST', '/auth/login/sha256', { username, key: keyHex });
-    setAuth(data); closeAuth(); showApp();
-  } catch (e) {
-    btnLoading(btn, false);
-    showAuthError(errEl, e.message || 'SHA-256 sign in failed.');
-  }
-});
-
-// ── Wallet login ──────────────────────────────────────────────────────────────
-const walletDot   = document.getElementById('w-dot');
-const walletLabel = document.getElementById('w-label');
-
-document.getElementById('w-connect-btn')?.addEventListener('click', async () => {
-  const errEl = document.getElementById('wallet-err');
-  errEl.textContent = '';
-  if (!window.ethereum) { errEl.textContent = 'No Web3 wallet detected. Install MetaMask.'; return; }
-  try {
-    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-    walletAddr = accounts[0];
-    walletDot?.classList.add('on');
-    if (walletLabel) walletLabel.textContent = walletAddr.slice(0,6) + '…' + walletAddr.slice(-4);
-    document.getElementById('w-sign-btn').style.display = '';
-  } catch (e) { errEl.textContent = e.message; }
-});
-
-document.getElementById('w-sign-btn')?.addEventListener('click', async () => {
-  const errEl = document.getElementById('wallet-err');
-  errEl.textContent = '';
-  try {
-    const { challenge } = await api('GET', '/auth/wallet/challenge?address=' + walletAddr);
-    const signature     = await window.ethereum.request({ method: 'personal_sign', params: [challenge, walletAddr] });
-    const data          = await api('POST', '/auth/wallet/verify', { address: walletAddr, signature });
-    setAuth(data); closeAuth(); showApp();
-  } catch (e) { errEl.textContent = e.message; }
-});
-
-// ── Guest login ───────────────────────────────────────────────────────────────
-document.getElementById('guest-btn')?.addEventListener('click', async () => {
-  const btn   = document.getElementById('guest-btn');
-  const errEl = document.getElementById('guest-err');
-  errEl.textContent = '';
-  btnLoading(btn, true);
-  try {
-    const data = await api('POST', '/auth/guest', { ping: 'ping' });
-    setAuth(data); closeAuth(); showApp();
-  } catch (e) {
-    btnLoading(btn, false);
-    showAuthError(errEl, e.message || 'Guest access failed.');
-  }
-});
-
-// ── Register ──────────────────────────────────────────────────────────────────
-document.getElementById('reg-btn')?.addEventListener('click', async () => {
-  const btn          = document.getElementById('reg-btn');
-  const username     = document.getElementById('reg-user').value.trim();
-  const display_name = document.getElementById('reg-name').value.trim();
-  const password     = document.getElementById('reg-pass').value;
-  const confirm      = document.getElementById('reg-confirm').value;
-  const errEl        = document.getElementById('reg-err');
-  errEl.textContent  = '';
-  ['reg-user','reg-pass','reg-confirm'].forEach(id => document.getElementById(id)?.closest('.field')?.classList.remove('field-err'));
-  if (!requireFields([['reg-user','Username'],['reg-pass','Password'],['reg-confirm','Confirm']])) {
-    showAuthError(errEl, 'Username and password are required.'); return;
-  }
-  if (password !== confirm)   { showAuthError(errEl, 'Passwords do not match.'); document.getElementById('reg-confirm')?.closest('.field')?.classList.add('field-err'); return; }
-  if (password.length < 8)    { showAuthError(errEl, 'Password must be at least 8 characters.'); document.getElementById('reg-pass')?.closest('.field')?.classList.add('field-err'); return; }
-  btnLoading(btn, true);
-  try {
-    const data = await api('POST', '/auth/register', { username, password, display_name });
-    setAuth(data); closeAuth(); showApp();
-    toast('Account created! Welcome, ' + userName, 'ok');
-  } catch (e) {
-    btnLoading(btn, false);
-    showAuthError(errEl, e.message || 'Registration failed. Try a different username.');
-  }
-});
-['reg-user','reg-pass','reg-confirm'].forEach(id =>
-  document.getElementById(id)?.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('reg-btn')?.click(); })
-);
 
 // ── App init ──────────────────────────────────────────────────────────────────
 function showApp() {
@@ -430,7 +222,6 @@ function navigate(page) {
   if (page === 'sessions')   loadSessions();
   if (page === 'policies')   loadPolicies();
   if (page === 'audit')      loadAudit();
-  if (page === 'account')    loadAccount();
   if (page === 'docs')       renderDoc('intro');
 }
 
@@ -745,67 +536,6 @@ document.getElementById('jwt-decode-btn')?.addEventListener('click', async () =>
   } catch { out.textContent = '⚠️ Could not decode token — check format'; }
 });
 
-// ── Account ───────────────────────────────────────────────────────────────────
-async function loadAccount() {
-  try {
-    const u = await api('GET', '/account');
-    const n = u.display_name || u.username;
-    const av = document.getElementById('acc-avatar');
-    if (av) av.textContent = (n||'U')[0].toUpperCase();
-    const nl = document.getElementById('acc-name-lbl');     if(nl) nl.textContent = esc(n);
-    const ul = document.getElementById('acc-user-lbl');     if(ul) ul.textContent = '@' + esc(u.username);
-    const rl = document.getElementById('acc-role-lbl');     if(rl) rl.textContent = esc(u.role) + ' · ' + esc(u.auth_type);
-    const di = document.getElementById('acc-display');      if(di) di.value = esc(u.display_name || '');
-    const si = document.getElementById('acc-since');        if(si) si.value = (u.created_at||'').slice(0,10);
-    // SHA-256 token section: only relevant for SHA-256 accounts
-    const shaSection = document.getElementById('acc-sha-section');
-    if (shaSection) shaSection.style.display = u.auth_type === 'sha256_key' ? '' : 'none';
-  } catch (e) { if (!e.sessionExpired) toast('Failed to load account: ' + e.message, 'err'); }
-}
-
-document.getElementById('acc-save-btn')?.addEventListener('click', async () => {
-  const display_name = document.getElementById('acc-display').value.trim();
-  const msgEl = document.getElementById('acc-save-msg');
-  try {
-    await api('PATCH', '/account', { display_name });
-    if(msgEl) { msgEl.textContent='Saved!'; setTimeout(()=>{msgEl.textContent='';},2500); }
-    toast('Profile updated', 'ok');
-    loadAccount();
-  } catch (e) { if (!e.sessionExpired) toast('Error: ' + e.message, 'err'); }
-});
-
-document.getElementById('acc-pw-btn')?.addEventListener('click', async () => {
-  const current_password = document.getElementById('acc-cur-pw').value;
-  const new_password     = document.getElementById('acc-new-pw').value;
-  const confirm          = document.getElementById('acc-conf-pw').value;
-  const errEl            = document.getElementById('acc-pw-err');
-  const msgEl            = document.getElementById('acc-pw-msg');
-  errEl.textContent      = '';
-  if (new_password !== confirm) { errEl.textContent='Passwords do not match'; return; }
-  if (new_password.length < 8)  { errEl.textContent='Minimum 8 characters'; return; }
-  try {
-    await api('PATCH', '/account', { current_password, new_password });
-    if(msgEl) { msgEl.textContent='Updated!'; setTimeout(()=>{msgEl.textContent='';},2500); }
-    toast('Password changed', 'ok');
-    ['acc-cur-pw','acc-new-pw','acc-conf-pw'].forEach(id => { const el2=document.getElementById(id); if(el2)el2.value=''; });
-  } catch (e) { if (!e.sessionExpired) errEl.textContent = e.message; }
-});
-
-document.getElementById('acc-copy-sha')?.addEventListener('click', () => {
-  const val = document.getElementById('acc-sha-token')?.textContent || '';
-  navigator.clipboard.writeText(val).then(() => toast('Copied', 'ok'));
-});
-
-// Account sub-tabs
-document.querySelectorAll('.acc-nav-item').forEach(item => {
-  item.addEventListener('click', () => {
-    document.querySelectorAll('.acc-nav-item').forEach(i => i.classList.remove('active'));
-    document.querySelectorAll('.acc-panel').forEach(p => p.classList.remove('active'));
-    item.classList.add('active');
-    document.getElementById('stab-' + item.dataset.stab)?.classList.add('active');
-  });
-});
-
 // ── Modals ────────────────────────────────────────────────────────────────────
 function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
 function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
@@ -909,8 +639,8 @@ const DOCS = {
   quickstart: {
     title: 'Quickstart',
     body: `<h3>Get Started in Minutes</h3>
-<h4>1. Create your account</h4>
-<p>Click <strong>Get Started</strong> on the landing page or <strong>Register</strong> in the sign-in panel. Choose a username (3–32 chars) and a password (minimum 8 characters). No admin approval required — your account is ready immediately with <code>viewer</code> role. An admin can elevate your role to <code>operator</code> or <code>admin</code>.</p>
+<h4>1. Open the control plane</h4>
+<p>Click <strong>Open Control Plane</strong> from the landing page. The UI opens directly in viewer mode so you can explore immediately.</p>
 <h4>2. Register your first node</h4>
 <pre>POST /api/nodes
 {
@@ -946,28 +676,6 @@ const DOCS = {
 <p>Ephemeral read-only viewer token. Expires in 2 hours. No credentials required. No account created.</p>
 <h4>Session Persistence</h4>
 <p>Your session token is stored in <code>localStorage</code> and survives browser restarts. Sign out explicitly to clear it.</p>`
-  },
-  'register-doc': {
-    title: 'Account Registration',
-    body: `<h3>Creating an Account</h3>
-<p>Self-registration is open to anyone. <strong>No admin approval required.</strong> New accounts receive the <code>viewer</code> role by default.</p>
-<h4>Requirements</h4>
-<ul>
-  <li>Username: 3–32 characters, alphanumeric, hyphens, underscores</li>
-  <li>Password: minimum 8 characters</li>
-  <li>Display name: optional, 1–64 characters</li>
-  <li>Reserved usernames (e.g. <code>guest</code>) are not available for self-registration</li>
-</ul>
-<h4>API</h4>
-<pre>POST /api/auth/register
-{
-  "username": "alice",
-  "password": "secure-pass",
-  "display_name": "Alice"
-}</pre>
-<p>Returns a JWT with <code>role: "viewer"</code> on success. An administrator can promote the account to <code>operator</code> or <code>admin</code>.</p>
-<h4>Philosophy</h4>
-<p>Every repository owner controls their own infrastructure. Open registry — free for all. No centralised gating.</p>`
   },
   'proxy-doc': {
     title: 'Proxy Layer',
@@ -1126,7 +834,6 @@ document.querySelectorAll('.docs-nav-item').forEach(item => {
 // ── Global escape key ─────────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
-    closeAuth();
     document.querySelectorAll('.modal-overlay.open').forEach(m => closeModal(m.id));
   }
 });
