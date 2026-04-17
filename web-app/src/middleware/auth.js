@@ -7,7 +7,7 @@ const logger = require('../utils/logger');
 const PUBLIC_USER = Object.freeze({
   id: 'public',
   username: 'public',
-  role: 'admin',
+  role: 'viewer',
   authType: 'none',
   guest: true,
 });
@@ -17,7 +17,7 @@ function authenticate(req, res, next) {
   const header = req.headers.authorization || '';
 
   if (!header) {
-    req.user = { ...PUBLIC_USER };
+    req.user = Object.assign({}, PUBLIC_USER);
     return next();
   }
 

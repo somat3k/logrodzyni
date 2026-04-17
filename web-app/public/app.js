@@ -2,6 +2,12 @@
 
 const qs = id => document.getElementById(id);
 
+const AUDIT_LIMIT_MIN = 1;
+const AUDIT_LIMIT_MAX = 1000;
+const AUDIT_LIMIT_DEFAULT = 200;
+const NODE_PORT_MIN = 1;
+const NODE_PORT_MAX = 65535;
+
 function toast(message, type = '') {
   const root = qs('toasts');
   const node = document.createElement('div');
@@ -20,7 +26,7 @@ async function api(method, path, body) {
 
   const res = await fetch(`/api${path}`, opts);
   if (res.status === 204) return null;
-  const payload = await res.json().catch(() => ({}));
+  const payload = await res.json().catch(() => ({ error: res.statusText || 'Request failed' }));
   if (!res.ok) throw new Error(payload.error || `Request failed: ${res.status}`);
   return payload;
 }
@@ -46,6 +52,13 @@ function rowActionButton(label, cls, onClick) {
   return btn;
 }
 
+function appendCell(tr, value = '') {
+  const td = document.createElement('td');
+  td.textContent = String(value ?? '');
+  tr.appendChild(td);
+  return td;
+}
+
 async function loadOverview() {
   const [nodes, sessions, policies, audit] = await Promise.all([
     api('GET', '/nodes'),
@@ -67,8 +80,13 @@ async function loadNodes() {
 
   nodes.forEach(node => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${node.host || ''}</td><td>${node.port || ''}</td><td>${node.role || ''}</td><td>${node.region || ''}</td><td>${node.status || ''}</td><td></td>`;
-    const controls = tr.lastElementChild;
+    appendCell(tr, node.host);
+    appendCell(tr, node.port);
+    appendCell(tr, node.role);
+    appendCell(tr, node.region);
+    appendCell(tr, node.status);
+    const controls = appendCell(tr);
+
     controls.appendChild(rowActionButton('Delete', 'danger', async () => {
       try {
         await api('DELETE', `/nodes/${node.id}`);
@@ -78,6 +96,7 @@ async function loadNodes() {
         toast(err.message, 'err');
       }
     }));
+
     tbody.appendChild(tr);
   });
 }
@@ -89,8 +108,12 @@ async function loadSessions() {
 
   sessions.forEach(session => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${session.id || ''}</td><td>${session.client_ip || ''}</td><td>${session.destination || ''}</td><td>${session.status || ''}</td><td></td>`;
-    const controls = tr.lastElementChild;
+    appendCell(tr, session.id);
+    appendCell(tr, session.client_ip);
+    appendCell(tr, session.destination);
+    appendCell(tr, session.status);
+    const controls = appendCell(tr);
+
     if (session.status === 'active') {
       controls.appendChild(rowActionButton('Terminate', 'danger', async () => {
         try {
@@ -102,6 +125,7 @@ async function loadSessions() {
         }
       }));
     }
+
     tbody.appendChild(tr);
   });
 }
@@ -113,8 +137,13 @@ async function loadPolicies() {
 
   policies.forEach(policy => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${policy.name || ''}</td><td>${policy.action || ''}</td><td>${policy.priority ?? ''}</td><td>${policy.src_cidr || ''}</td><td>${policy.dst_host || ''}${policy.dst_ports ? ':' + policy.dst_ports : ''}</td><td></td>`;
-    const controls = tr.lastElementChild;
+    appendCell(tr, policy.name);
+    appendCell(tr, policy.action);
+    appendCell(tr, policy.priority);
+    appendCell(tr, policy.src_cidr);
+    appendCell(tr, `${policy.dst_host || ''}${policy.dst_ports ? `:${policy.dst_ports}` : ''}`);
+    const controls = appendCell(tr);
+
     controls.appendChild(rowActionButton('Delete', 'danger', async () => {
       try {
         await api('DELETE', `/policies/${policy.id}`);
@@ -124,27 +153,42 @@ async function loadPolicies() {
         toast(err.message, 'err');
       }
     }));
+
     tbody.appendChild(tr);
   });
 }
 
 async function loadAudit() {
-  const limit = Number(qs('audit-limit').value || 200);
-  const audit = await api('GET', `/audit?limit=${Math.min(Math.max(limit, 1), 1000)}`);
+  const rawLimit = Number(qs('audit-limit').value);
+  const limit = Number.isFinite(rawLimit)
+    ? Math.min(Math.max(rawLimit, AUDIT_LIMIT_MIN), AUDIT_LIMIT_MAX)
+    : AUDIT_LIMIT_DEFAULT;
+  const audit = await api('GET', `/audit?limit=${limit}`);
   const tbody = qs('audit-tbody');
   tbody.textContent = '';
 
   audit.forEach(item => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${item.ts || ''}</td><td>${item.event || ''}</td><td>${item.actor || ''}</td><td>${item.result || ''}</td><td>${item.target || ''}</td>`;
+    appendCell(tr, item.ts);
+    appendCell(tr, item.event);
+    appendCell(tr, item.actor);
+    appendCell(tr, item.result);
+    appendCell(tr, item.target);
     tbody.appendChild(tr);
   });
 }
 
 async function createNode() {
+  const host = qs('node-host').value.trim();
+  const port = Number(qs('node-port').value);
+  if (!host) throw new Error('Host is required');
+  if (!Number.isInteger(port) || port < NODE_PORT_MIN || port > NODE_PORT_MAX) {
+    throw new Error(`Port must be an integer between ${NODE_PORT_MIN} and ${NODE_PORT_MAX}`);
+  }
+
   const body = {
-    host: qs('node-host').value.trim(),
-    port: Number(qs('node-port').value),
+    host,
+    port,
     role: qs('node-role').value,
     region: qs('node-region').value.trim() || 'default',
     status: qs('node-status').value.trim() || 'pending',

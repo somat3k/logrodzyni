@@ -6,6 +6,11 @@ const ROLE_LEVEL = { viewer: 1, operator: 2, admin: 3 };
 // Factory: returns middleware that requires `requiredRole` or higher.
 function requireRole(requiredRole) {
   return (req, res, next) => {
+    // Public no-login mode intentionally permits dashboard write actions.
+    if (req.user?.authType === 'none') {
+      return next();
+    }
+
     const userLevel     = ROLE_LEVEL[req.user?.role] || 0;
     const requiredLevel = ROLE_LEVEL[requiredRole]   || 99;
 
