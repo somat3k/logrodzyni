@@ -149,15 +149,12 @@ async function enterApp() {
   showApp();
 }
 
-document.getElementById('nav-enter')?.addEventListener('click', async () => {
-  try { await enterApp(); } catch (e) { toast('Access failed: ' + e.message, 'err'); }
-});
-document.getElementById('hero-enter')?.addEventListener('click', async () => {
-  try { await enterApp(); } catch (e) { toast('Access failed: ' + e.message, 'err'); }
-});
-document.getElementById('cta-enter')?.addEventListener('click', async () => {
-  try { await enterApp(); } catch (e) { toast('Access failed: ' + e.message, 'err'); }
-});
+const bindControlPlaneButton = id => {
+  document.getElementById(id)?.addEventListener('click', async () => {
+    try { await enterApp(); } catch (e) { toast('Access failed: ' + e.message, 'err'); }
+  });
+};
+['nav-open-control-plane', 'hero-open-control-plane', 'cta-open-control-plane'].forEach(bindControlPlaneButton);
 document.getElementById('nav-docs')?.addEventListener('click', e => {
   e.preventDefault();
   (async () => {
