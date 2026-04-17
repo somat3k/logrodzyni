@@ -28,7 +28,9 @@ async function api(method, path, body) {
   const endpointPath = normalizedConfiguredBase && /\/api$/.test(normalizedConfiguredBase)
     ? normalizedPath
     : `api/${normalizedPath}`;
-  const base = (normalizedConfiguredBase || window.location.origin).replace(/\/+$/, '') + '/';
+  const base = normalizedConfiguredBase
+    ? `${normalizedConfiguredBase}/`
+    : new URL('.', window.location.href).toString();
   const url = new URL(endpointPath, base);
   const res = await fetch(url.toString(), opts);
   if (res.status === 204) return null;
