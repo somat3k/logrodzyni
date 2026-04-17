@@ -344,7 +344,7 @@ document.getElementById('guest-btn')?.addEventListener('click', async () => {
   errEl.textContent = '';
   btnLoading(btn, true);
   try {
-    const data = await api('POST', '/auth/guest', {});
+    const data = await api('POST', '/auth/guest', { ping: 'ping' });
     setAuth(data); closeAuth(); showApp();
   } catch (e) {
     btnLoading(btn, false);

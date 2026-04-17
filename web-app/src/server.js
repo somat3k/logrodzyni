@@ -15,7 +15,6 @@ const nodesRouter    = require('./routes/nodes');
 const sessionsRouter = require('./routes/sessions');
 const policiesRouter = require('./routes/policies');
 const auditRouter    = require('./routes/audit');
-const accountRouter  = require('./routes/account');
 
 const app = express();
 
@@ -74,7 +73,6 @@ app.use('/api/nodes',    nodesRouter);
 app.use('/api/sessions', sessionsRouter);
 app.use('/api/policies', policiesRouter);
 app.use('/api/audit',    auditRouter);
-app.use('/api/account',  accountRouter);
 
 // Health / liveness probe.
 app.get('/healthz', (req, res) => res.json({ status: 'ok' }));
