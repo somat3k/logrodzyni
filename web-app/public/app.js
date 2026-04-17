@@ -1066,19 +1066,19 @@ const DOCS = {
   'api-auth': {
     title: 'Auth API Reference',
     body: `<h3>Auth Endpoints</h3>
-<pre>POST /api/auth/register      — Create account (open, no approval required)
+<pre>POST /api/auth/register      — Registration disabled (returns 410 Gone)
 POST /api/auth/login         — Password login
 POST /api/auth/login/sha256  — SHA-256 key login
 GET  /api/auth/wallet/challenge — Request wallet challenge nonce
 POST /api/auth/wallet/verify — Verify wallet signature (EIP-191)
-POST /api/auth/guest         — Guest token with persisted guest profile (read-only, 2h TTL)
+POST /api/auth/guest         — Guest token (requires {"ping":"ping"}, returns pong + telemetry)
 POST /api/auth/logout        — Logout (client discards token)
-GET  /api/account            — Get own profile (auth required, includes guest)
-PATCH /api/account           — Update profile / change password</pre>
+GET  /api/account            — Removed endpoint (returns 404 Not Found)
+PATCH /api/account           — Removed endpoint (returns 404 Not Found)</pre>
 <h4>Response</h4>
-<p>All auth endpoints return <code>{ token, role, username, expiresIn }</code> on success. Include the token as <code>Authorization: Bearer &lt;token&gt;</code> in subsequent requests.</p>
+<p>Auth login endpoints return token payloads on success. Guest auth additionally returns <code>pong</code> and <code>telemetry</code>. Include tokens as <code>Authorization: Bearer &lt;token&gt;</code> in subsequent requests.</p>
 <h4>Roles</h4>
-<pre>viewer   — read-only access (default for new accounts and guests)
+<pre>viewer   — read-only access (default for guests)
 operator — read/write nodes, sessions, policies
 admin    — full CRUD including user management</pre>`
   },
