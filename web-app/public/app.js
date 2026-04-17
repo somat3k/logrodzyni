@@ -215,10 +215,13 @@ async function createSession() {
 }
 
 async function createPolicy() {
+  const priorityRaw = Number(qs('policy-priority').value || 0);
+  if (!Number.isFinite(priorityRaw)) throw new Error('Policy priority must be numeric');
+
   const body = {
     name: qs('policy-name').value.trim(),
     action: qs('policy-action').value,
-    priority: Number(qs('policy-priority').value || 0),
+    priority: priorityRaw,
     src_cidr: qs('policy-src').value.trim() || null,
     dst_host: qs('policy-dst-host').value.trim() || null,
     dst_ports: qs('policy-dst-ports').value.trim() || null,
