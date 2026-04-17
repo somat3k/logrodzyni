@@ -146,8 +146,14 @@ window.addEventListener('scroll', () => {
 // ── Landing actions ───────────────────────────────────────────────────────────
 async function enterApp() {
   if (!token) {
-    const data = await api('POST', '/auth/guest', { ping: 'ping' });
-    setAuth(data);
+    if (!window.__API_BASE__) {
+      // No backend configured (e.g. hosted on GitHub Pages without API_BASE_URL set).
+      // Create a local guest session so the UI is accessible as a demo.
+      setAuth({ token: 'demo-guest', role: 'viewer', username: 'guest' });
+    } else {
+      const data = await api('POST', '/auth/guest', { ping: 'ping' });
+      setAuth(data);
+    }
   }
   showApp();
 }
@@ -180,6 +186,10 @@ function showApp() {
   app.style.display = '';
   app.classList.add('open');
   document.getElementById('fab').style.display = '';
+
+  // Show a notice when there is no backend API configured.
+  const demoBar = document.getElementById('demo-mode-bar');
+  if (demoBar) demoBar.style.display = window.__API_BASE__ ? 'none' : '';
 
   const initials = (userName || 'U').slice(0,2).toUpperCase();
   const hdAv     = document.getElementById('hd-av');
