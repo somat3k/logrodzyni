@@ -78,14 +78,44 @@ router.post('/login/sha256', (req, res) => {
 
 // ── POST /api/auth/guest ─────────────────────────────────────────────────────
 router.post('/guest', (req, res) => {
+  const { ping } = req.body || {};
+  if (ping !== 'ping') {
+    AuditLog.append('login', 'guest', null, 'failure:bad_ping', { ip: req.ip, method: 'guest' });
+    return res.status(400).json({ error: 'Guest login requires a ping value of "ping"' });
+  }
+
   const guestUser = Users.createGuest();
+  const telemetry = {
+    requestId: uuidv4(),
+    event: 'auth.guest',
+    timestamp: new Date().toISOString(),
+    ip: req.ip,
+    userAgent: req.get('user-agent') || null,
+    ping,
+    pong: 'pong',
+  };
   const token = jwt.sign(
     { id: guestUser.id, username: guestUser.username, role: guestUser.role, authType: guestUser.auth_type, guest: true },
     config.jwt.secret,
     { algorithm: 'HS256', expiresIn: '2h' }
   );
-  AuditLog.append('login', guestUser.username, null, 'success', { ip: req.ip, method: 'guest' });
-  res.json({ token, role: guestUser.role, username: guestUser.username, expiresIn: '2h', guest: true });
+  AuditLog.append('login', guestUser.username, null, 'success', { ip: req.ip, method: 'guest', telemetry });
+  logger.info({
+    msg: 'Guest logged in',
+    username: guestUser.username,
+    role: guestUser.role,
+    method: 'guest',
+    telemetry,
+  });
+  res.json({
+    token,
+    role: guestUser.role,
+    username: guestUser.username,
+    expiresIn: '2h',
+    guest: true,
+    pong: 'pong',
+    telemetry,
+  });
 });
 
 // ── GET /api/auth/wallet/challenge  (request a sign challenge) ───────────────
@@ -152,63 +182,9 @@ router.post('/wallet/verify', (req, res) => {
   res.json({ token, role: user.role, username: user.username, expiresIn: config.jwt.expiresIn });
 });
 
-// Reserved usernames that cannot be self-registered
-const RESERVED_USERNAMES = new Set(['guest', 'admin', 'system', 'root']);
-
 // ── POST /api/auth/register ──────────────────────────────────────────────────
-router.post('/register', async (req, res) => {
-  const { username, password, display_name } = req.body || {};
-  if (!username || !password)
-    return res.status(400).json({ error: 'username and password are required' });
-  if (username.length < 3 || username.length > 32)
-    return res.status(400).json({ error: 'Username must be 3–32 characters' });
-  if (!/^[a-z0-9_-]+$/i.test(username))
-    return res.status(400).json({ error: 'Username may only contain letters, numbers, hyphens and underscores' });
-  if (RESERVED_USERNAMES.has(username.toLowerCase()))
-    return res.status(400).json({ error: 'That username is reserved and cannot be registered' });
-  if (password.length < 8)
-    return res.status(400).json({ error: 'Password must be at least 8 characters' });
-
-  // Validate optional display_name
-  let resolvedDisplayName = username;
-  if (display_name !== undefined) {
-    if (typeof display_name !== 'string')
-      return res.status(400).json({ error: 'display_name must be 1–64 characters' });
-    const trimmed = display_name.trim();
-    if (trimmed.length > 64)
-      return res.status(400).json({ error: 'display_name must be 1–64 characters' });
-    if (trimmed.length > 0) resolvedDisplayName = trimmed;
-  }
-
-  if (Users.findByUsername(username))
-    return res.status(409).json({ error: 'Username already taken' });
-
-  const id            = uuidv4();
-  const password_hash = await bcrypt.hash(password, 12);
-  const newUser = {
-    id,
-    username,
-    display_name: resolvedDisplayName,
-    role:         'viewer',
-    auth_type:    'password',
-    password_hash,
-    sha256_key:   null,
-    wallet_address: null,
-  };
-
-  try {
-    Users.create(newUser);
-  } catch (err) {
-    // Handle UNIQUE constraint race condition
-    if (err.code === 'SQLITE_CONSTRAINT_UNIQUE' || (err.message && err.message.includes('UNIQUE')))
-      return res.status(409).json({ error: 'Username already taken' });
-    throw err;
-  }
-
-  const tokenStr = issueToken({ id, username, role: 'viewer', auth_type: 'password' });
-  AuditLog.append('register', username, null, 'success', { ip: req.ip });
-  logger.info({ msg: 'User registered', username, role: 'viewer' });
-  res.status(201).json({ token: tokenStr, role: 'viewer', username, expiresIn: config.jwt.expiresIn });
+router.post('/register', (_req, res) => {
+  return res.status(410).json({ error: 'Account registration is disabled' });
 });
 
 // ── POST /api/auth/logout ─────────────────────────────────────────────────────

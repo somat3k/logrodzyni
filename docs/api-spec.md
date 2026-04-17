@@ -2,7 +2,7 @@
 
 Base URL: `https://control.example.com`
 
-All endpoints except auth/registration and health probes require a JWT Bearer token in `Authorization: Bearer <token>`.
+All endpoints except `/api/auth/*` endpoints and health probes require a JWT Bearer token in `Authorization: Bearer <token>`.
 
 ---
 
@@ -10,24 +10,7 @@ All endpoints except auth/registration and health probes require a JWT Bearer to
 
 ### POST /api/auth/register
 
-Open registration — no admin approval required.
-
-Request:
-```json
-{ "username": "alice", "password": "secure-pass", "display_name": "Alice" }
-```
-
-Response `201`:
-```json
-{ "token": "<JWT>", "role": "viewer", "username": "alice", "expiresIn": "8h" }
-```
-
-Validation:
-- `username`: 3–32 chars, alphanumeric, hyphens, underscores. Reserved names (e.g. `guest`) are rejected.
-- `password`: minimum 8 characters
-- `display_name`: optional, 1–64 characters
-
-Errors: `400` (validation), `409` (username already taken)
+Disabled. Returns `410 Gone`.
 
 ---
 
@@ -102,10 +85,33 @@ Response `200`:
 
 Read-only viewer token. 2h TTL. A guest profile is created and persisted for the issued token identity.
 
+Request:
+```json
+{ "ping": "ping" }
+```
+
 Response `200`:
 ```json
-{ "token": "<JWT>", "role": "viewer", "username": "guest_ab12cd", "guest": true, "expiresIn": "2h" }
+{
+  "token": "<JWT>",
+  "role": "viewer",
+  "username": "guest_ab12cd",
+  "guest": true,
+  "expiresIn": "2h",
+  "pong": "pong",
+  "telemetry": {
+    "requestId": "<uuid>",
+    "event": "auth.guest",
+    "timestamp": "2026-01-01T00:00:00.000Z",
+    "ip": "::ffff:127.0.0.1",
+    "userAgent": "Mozilla/5.0 ...",
+    "ping": "ping",
+    "pong": "pong"
+  }
+}
 ```
+
+Errors: `400` (missing/invalid ping)
 
 ---
 
@@ -117,42 +123,7 @@ Stateless; client discards the token from `localStorage`.
 
 ## Account
 
-### GET /api/account
-
-Roles: authenticated users and guest tokens
-
-Response `200`:
-```json
-{
-  "username": "alice",
-  "display_name": "Alice",
-  "role": "viewer",
-  "auth_type": "password",
-  "created_at": "2026-01-01T00:00:00.000Z"
-}
-```
-
-Errors: `401` (no token)
-
----
-
-### PATCH /api/account
-
-Update display name or change password.
-
-To update display name:
-```json
-{ "display_name": "Alice B." }
-```
-
-To change password:
-```json
-{ "current_password": "oldpass", "new_password": "newpass123" }
-```
-
-Response `200`: `{ "message": "Account updated" }`
-
-Errors: `400` (validation), `401` (wrong current password)
+Account endpoints are removed and return `404 Not Found`.
 
 ---
 
