@@ -2,7 +2,7 @@
 
 Base URL: `https://control.example.com`
 
-All endpoints except auth login endpoints and health probes require a JWT Bearer token in `Authorization: Bearer <token>`.
+All endpoints except `/api/auth/*` endpoints and health probes require a JWT Bearer token in `Authorization: Bearer <token>`.
 
 ---
 
