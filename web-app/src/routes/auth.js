@@ -183,8 +183,7 @@ router.post('/wallet/verify', (req, res) => {
 });
 
 // ── POST /api/auth/register ──────────────────────────────────────────────────
-router.post('/register', (req, res) => {
-  void req;
+router.post('/register', (_req, res) => {
   return res.status(410).json({ error: 'Account registration is disabled' });
 });
 
