@@ -1,852 +1,274 @@
-/* logrodzyni — Control Plane SPA  |  v2.1  |  All DOM mutations use textContent/createElement (XSS-safe) */
 'use strict';
 
-// ── State (localStorage → persists across browser restarts) ───────────────────
-let token    = localStorage.getItem('jwt')  || null;
-let userRole = localStorage.getItem('role') || null;
-let userName = localStorage.getItem('user') || null;
+const qs = id => document.getElementById(id);
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const esc = v => String(v ?? '');
+const AUDIT_LIMIT_MIN = 1;
+const AUDIT_LIMIT_MAX = 1000;
+const AUDIT_LIMIT_DEFAULT = 200;
+const NODE_PORT_MIN = 1;
+const NODE_PORT_MAX = 65535;
 
-function el(tag, attrs = {}, text) {
-  const e = document.createElement(tag);
-  Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
-  if (text !== undefined) e.textContent = text;
-  return e;
+function toast(message, type = '') {
+  const root = qs('toasts');
+  const node = document.createElement('div');
+  node.className = `toast ${type}`.trim();
+  node.textContent = message;
+  root.appendChild(node);
+  setTimeout(() => node.remove(), 3500);
 }
 
 async function api(method, path, body) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
-  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
-  if (body)  opts.body = JSON.stringify(body);
-  const configuredBase = window.__API_BASE__;
-  const normalizedConfiguredBase = configuredBase == null
-    ? ''
-    : String(configuredBase).trim().replace(/\/+$/, '');
-  const normalizedPath = String(path || '').replace(/^\/+/, '');
-  const ensureTrailingSlash = value => `${String(value || '').replace(/\/+$/, '')}/`;
-  const endpointPath = normalizedConfiguredBase && /\/api$/.test(normalizedConfiguredBase)
-    ? normalizedPath
-    : `api/${normalizedPath}`;
-  const base = normalizedConfiguredBase
-    ? ensureTrailingSlash(normalizedConfiguredBase)
-    : ensureTrailingSlash(new URL('.', window.location.href).toString());
-  const url = new URL(endpointPath, base);
-  const res = await fetch(url.toString(), opts);
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (body) opts.body = JSON.stringify(body);
+
+  const res = await fetch(`/api${path}`, opts);
   if (res.status === 204) return null;
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    // Auto-logout when a stored token is rejected by a non-auth endpoint (expired / revoked).
-    // Mark the error as sessionExpired so callers can skip their generic error UI and avoid
-    // showing a duplicate/conflicting message alongside the "Session expired" toast.
-    if (res.status === 401 && token && !path.startsWith('/auth/')) {
-      clearAuth();
-      const app     = document.getElementById('app');
-      const fab     = document.getElementById('fab');
-      const landing = document.getElementById('landing');
-      if (app)     { app.classList.remove('open'); app.style.display = 'none'; }
-      if (fab)     fab.style.display = 'none';
-      if (landing) landing.style.display = '';
-      toast('Session expired — please sign in again', 'err');
-      throw Object.assign(new Error('Session expired'), { status: 401, sessionExpired: true });
-    }
-    throw Object.assign(new Error(data.error || res.statusText), { status: res.status });
-  }
-  return data;
+  const payload = await res.json().catch(() => ({ error: res.statusText || 'Request failed' }));
+  if (!res.ok) throw new Error(payload.error || `Request failed: ${res.status}`);
+  return payload;
 }
 
-function setAuth(data) {
-  token    = data.token;
-  userRole = data.role;
-  userName = data.username || data.role;
-  localStorage.setItem('jwt',  token);
-  localStorage.setItem('role', userRole);
-  localStorage.setItem('user', userName);
+function setLastRefresh() {
+  qs('last-refresh').textContent = new Date().toLocaleString();
 }
 
-function clearAuth() {
-  token = userRole = userName = null;
-  localStorage.clear();
-}
-
-// ── Toast ─────────────────────────────────────────────────────────────────────
-function toast(msg, type = 'info') {
-  const root = document.getElementById('toasts');
-  const t = el('div', { class: `toast toast-${type}` }, msg);
-  root.appendChild(t);
-  setTimeout(() => t.remove(), 4000);
-}
-
-// ── Canvas particle hero ──────────────────────────────────────────────────────
-(function initCanvas() {
-  const canvas = document.getElementById('hero-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const particles = [];
-  const N = 70;
-
-  function resize() {
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  for (let i = 0; i < N; i++) {
-    particles.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      r: Math.random() * 1.5 + 0.4,
-      vx: (Math.random() - .5) * .35,
-      vy: (Math.random() - .5) * .35,
-      a: Math.random(),
-    });
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // connections
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const d  = Math.sqrt(dx*dx + dy*dy);
-        if (d < 130) {
-          ctx.beginPath();
-          ctx.strokeStyle = `rgba(34,197,94,${(1 - d/130) * 0.22})`;
-          ctx.lineWidth = 0.6;
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.stroke();
-        }
-      }
-    }
-    // dots
-    particles.forEach(p => {
-      p.x += p.vx; p.y += p.vy;
-      if (p.x < 0 || p.x > canvas.width)  p.vx *= -1;
-      if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(34,197,94,${p.a * 0.7})`;
-      ctx.fill();
-    });
-    requestAnimationFrame(draw);
-  }
-  draw();
-})();
-
-// ── Landing nav scroll effect ─────────────────────────────────────────────────
-window.addEventListener('scroll', () => {
-  const nav = document.getElementById('lnav');
-  if (nav) nav.classList.toggle('scrolled', window.scrollY > 30);
-});
-
-// ── Landing actions ───────────────────────────────────────────────────────────
-async function enterApp() {
-  if (!token) {
-    if (!window.__API_BASE__) {
-      // No backend configured (e.g. hosted on GitHub Pages without API_BASE_URL set).
-      // Create a local guest session so the UI is accessible as a demo.
-      setAuth({ token: 'demo.no-backend', role: 'viewer', username: 'guest' });
-    } else {
-      const data = await api('POST', '/auth/guest', { ping: 'ping' });
-      setAuth(data);
-    }
-  }
-  showApp();
-}
-
-const bindControlPlaneButton = id => {
-  document.getElementById(id)?.addEventListener('click', async () => {
-    try { await enterApp(); } catch (e) { toast('Access failed: ' + e.message, 'err'); }
+function switchPage(page) {
+  document.querySelectorAll('.tab[data-page]').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.page === page);
   });
-};
-['nav-open-control-plane', 'hero-open-control-plane', 'cta-open-control-plane'].forEach(bindControlPlaneButton);
-document.getElementById('nav-docs')?.addEventListener('click', e => {
-  e.preventDefault();
-  (async () => {
-    try { await enterApp(); navigate('docs'); } catch (err) { toast('Access failed: ' + err.message, 'err'); }
-  })();
-});
-
-// Service card launches
-document.querySelectorAll('.svc-card[data-launch]').forEach(card => {
-  card.addEventListener('click', async () => {
-    const pg = card.dataset.launch;
-    try { await enterApp(); navigate(pg); } catch (err) { toast('Access failed: ' + err.message, 'err'); }
-  });
-});
-
-// ── App init ──────────────────────────────────────────────────────────────────
-function showApp() {
-  document.getElementById('landing').style.display = 'none';
-  const app = document.getElementById('app');
-  app.style.display = '';
-  app.classList.add('open');
-  document.getElementById('fab').style.display = '';
-
-  // Show a notice when there is no backend API configured.
-  const demoBar = document.getElementById('demo-mode-bar');
-  if (demoBar) demoBar.style.display = window.__API_BASE__ ? 'none' : '';
-
-  const initials = (userName || 'U').slice(0,2).toUpperCase();
-  const hdAv     = document.getElementById('hd-av');
-  if (hdAv) hdAv.textContent = initials[0];
-  const hdUser   = document.getElementById('hd-user-lbl');
-  if (hdUser) hdUser.textContent = esc(userName || 'user');
-  const hdRole   = document.getElementById('hd-role');
-  if (hdRole) { hdRole.textContent = esc(userRole || 'viewer'); hdRole.className = 'role-chip ' + (userRole || 'viewer'); }
-
-  navigate('dashboard');
-}
-
-if (token) {
-  document.getElementById('landing').style.display = 'none';
-  showApp();
-}
-
-// ── Logout ────────────────────────────────────────────────────────────────────
-document.getElementById('app-logout')?.addEventListener('click', () => {
-  clearAuth();
-  document.getElementById('app').classList.remove('open');
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('fab').style.display = 'none';
-  document.getElementById('landing').style.display = '';
-});
-
-// ── Navigation ────────────────────────────────────────────────────────────────
-function navigate(page) {
-  document.querySelectorAll('.sb-item').forEach(item => {
-    item.classList.toggle('active', item.dataset.page === page);
-  });
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const pg = document.getElementById('page-' + page);
-  if (pg) pg.classList.add('active');
-
-  // lazy load
-  if (page === 'dashboard')  loadDashboard();
-  if (page === 'proxy')      loadNodes().then(ns => { if (ns) renderProxyNodes(ns); });
-  if (page === 'nodes')      loadNodes().then(ns => { if (ns) renderNodes(ns); });
-  if (page === 'sessions')   loadSessions();
-  if (page === 'policies')   loadPolicies();
-  if (page === 'audit')      loadAudit();
-  if (page === 'docs')       renderDoc('intro');
-}
-
-document.querySelectorAll('.sb-item').forEach(item => {
-  item.addEventListener('click', () => navigate(item.dataset.page));
-});
-
-// ── Dashboard ─────────────────────────────────────────────────────────────────
-async function loadDashboard() {
-  try {
-    const [nodes, sessions, policies, audit] = await Promise.all([
-      api('GET', '/nodes'),
-      api('GET', '/sessions'),
-      api('GET', '/policies'),
-      api('GET', '/audit?limit=50').catch(() => []),
-    ]);
-    document.getElementById('s-nodes').textContent    = nodes.length;
-    document.getElementById('s-sessions').textContent = sessions.filter(s => s.status === 'active').length;
-    document.getElementById('s-policies').textContent = policies.length;
-    document.getElementById('s-audit').textContent    = audit.length;
-    document.getElementById('badge-nodes').textContent = nodes.length;
-    document.getElementById('proxy-routes-stat') && (document.getElementById('proxy-routes-stat').textContent = nodes.length);
-
-    const tbody = document.getElementById('dash-nodes-tbody');
-    if (!tbody) return;
-    tbody.textContent = '';
-    nodes.slice(0, 8).forEach(n => {
-      const tr = el('tr');
-      [n.host, n.role, n.region || 'default', n.status].forEach((v, i) => {
-        const td = el('td');
-        if (i === 1 || i === 3) td.appendChild(el('span', { class: 'tag ' + statusTag(esc(v)) }, esc(v)));
-        else td.textContent = esc(v);
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    });
-  } catch (e) {
-    if (e.sessionExpired) return; // toast already shown by api()
-    const a = document.getElementById('dash-alert');
-    if (a) { a.className = 'alert alert-err'; a.textContent = 'Failed to load dashboard: ' + e.message; }
-  }
-}
-
-document.getElementById('dash-refresh')?.addEventListener('click', loadDashboard);
-
-function statusTag(v) {
-  const m = { active:'tag-ok', pending:'tag-warn', terminated:'tag-err', offline:'tag-err',
-               ingress:'tag-accent', relay:'tag-blue', egress:'tag-purple',
-               allow:'tag-ok', deny:'tag-err', 'rate-limit':'tag-warn' };
-  return m[v] || 'tag-muted';
-}
-
-// ── Nodes ─────────────────────────────────────────────────────────────────────
-async function loadNodes() {
-  try {
-    return await api('GET', '/nodes');
-  } catch (e) {
-    if (e.sessionExpired) return null;
-    showPageAlert('nodes-alert', 'Error: ' + e.message, 'err');
-    return null;
-  }
-}
-
-function renderNodes(nodes) {
-  const tbody = document.getElementById('nodes-tbody');
-  if (!tbody) return;
-  tbody.textContent = '';
-  nodes.forEach(n => {
-    const tr = el('tr');
-    [n.host, n.port, n.role, n.region || 'default', n.status, (n.created_at||'').slice(0,10)].forEach((v, i) => {
-      const td = el('td');
-      if (i === 2 || i === 4) td.appendChild(el('span', { class: 'tag ' + statusTag(esc(v)) }, esc(v)));
-      else td.textContent = esc(v);
-      tr.appendChild(td);
-    });
-    const actTd = el('td');
-    if (['admin','operator'].includes(userRole)) {
-      const btn = el('button', { class: 'btn-del' }, '✕ Delete');
-      btn.addEventListener('click', () => deleteNode(n.id));
-      actTd.appendChild(btn);
-    }
-    tr.appendChild(actTd);
-    tbody.appendChild(tr);
+  document.querySelectorAll('.page').forEach(node => {
+    node.classList.toggle('active', node.id === `page-${page}`);
   });
 }
 
-function renderProxyNodes(nodes) {
-  const tbody = document.getElementById('proxy-nodes-tbody');
-  if (!tbody) return;
-  tbody.textContent = '';
-  nodes.forEach(n => {
-    const tr = el('tr');
-    [n.host, n.port, n.role, n.region||'default', n.status, (n.created_at||'').slice(0,10)].forEach((v, i) => {
-      const td = el('td');
-      if (i === 2 || i === 4) td.appendChild(el('span', { class: 'tag ' + statusTag(esc(v)) }, esc(v)));
-      else td.textContent = esc(v);
-      tr.appendChild(td);
-    });
-    const actTd = el('td');
-    if (['admin','operator'].includes(userRole)) {
-      const btn = el('button', { class: 'btn-del' }, '✕');
-      btn.addEventListener('click', () => deleteNode(n.id, loadProxyPage));
-      actTd.appendChild(btn);
-    }
-    tr.appendChild(actTd);
-    tbody.appendChild(tr);
-  });
+function rowActionButton(label, cls, onClick) {
+  const btn = document.createElement('button');
+  btn.textContent = label;
+  if (cls) btn.classList.add(cls);
+  btn.addEventListener('click', onClick);
+  return btn;
 }
 
-async function loadProxyPage() {
-  const ns = await loadNodes();
-  if (ns) renderProxyNodes(ns);
+function appendCell(tr, value = '') {
+  const td = document.createElement('td');
+  td.textContent = String(value ?? '');
+  tr.appendChild(td);
+  return td;
 }
 
-async function deleteNode(id, cb) {
-  if (!confirm('Delete this node?')) return;
-  try {
-    await api('DELETE', '/nodes/' + id);
-    const ns = await loadNodes();
-    if (ns) { renderNodes(ns); if (cb) cb(); }
-    toast('Node deleted', 'ok');
-  } catch (e) {
-    if (e.sessionExpired) return;
-    showPageAlert('nodes-alert', 'Delete failed: ' + e.message, 'err');
-  }
-}
-
-function showPageAlert(id, msg, type) {
-  const el2 = document.getElementById(id);
-  if (!el2) return;
-  el2.className = 'alert alert-' + type;
-  el2.textContent = msg;
-  setTimeout(() => { if (el2) el2.textContent = ''; }, 4000);
-}
-
-// Node modal wiring
-document.getElementById('add-node-btn')?.addEventListener('click', () => openModal('modal-node'));
-document.getElementById('add-node-btn2')?.addEventListener('click', () => openModal('modal-node'));
-document.getElementById('refresh-nodes-btn')?.addEventListener('click', async () => {
-  const ns = await loadNodes(); if (ns) renderNodes(ns);
-});
-document.getElementById('n-save-btn')?.addEventListener('click', async () => {
-  const host   = document.getElementById('n-host').value.trim();
-  const port   = parseInt(document.getElementById('n-port').value, 10);
-  const role   = document.getElementById('n-role').value;
-  const region = document.getElementById('n-region').value.trim() || 'default';
-  try {
-    await api('POST', '/nodes', { host, port, role, region });
-    closeModal('modal-node');
-    toast('Node registered', 'ok');
-    const ns = await loadNodes();
-    if (ns) { renderNodes(ns); renderProxyNodes(ns); }
-  } catch (e) { if (!e.sessionExpired) toast('Error: ' + e.message, 'err'); }
-});
-
-// ── Sessions ──────────────────────────────────────────────────────────────────
-async function loadSessions() {
-  try {
-    const sessions = await api('GET', '/sessions');
-    const tbody    = document.getElementById('sessions-tbody');
-    if (!tbody) return;
-    tbody.textContent = '';
-    sessions.forEach(s => {
-      const tr = el('tr');
-      [s.id.slice(0,8)+'…', s.client_ip||'—', s.destination||'—', s.status, (s.started_at||'').slice(0,16)].forEach((v, i) => {
-        const td = el('td');
-        if (i === 3) td.appendChild(el('span', { class: 'tag ' + statusTag(esc(v)) }, esc(v)));
-        else td.textContent = esc(v);
-        tr.appendChild(td);
-      });
-      const actTd = el('td');
-      if (userRole === 'admin' && s.status === 'active') {
-        const btn = el('button', { class: 'btn-del' }, '✕ Kill');
-        btn.addEventListener('click', async () => { await api('DELETE','/sessions/'+s.id).catch(()=>{}); loadSessions(); });
-        actTd.appendChild(btn);
-      }
-      tr.appendChild(actTd);
-      tbody.appendChild(tr);
-    });
-  } catch (_) { /* guest may be restricted */ }
-}
-
-// ── Policies ──────────────────────────────────────────────────────────────────
-async function loadPolicies() {
-  try {
-    const policies = await api('GET', '/policies');
-    const tbody    = document.getElementById('policies-tbody');
-    if (!tbody) return;
-    tbody.textContent = '';
-    policies.forEach(p => {
-      const tr = el('tr');
-      [p.name, p.action, p.priority, p.src_cidr||'*', p.dst_host||'*', p.enabled?'✓':'✗'].forEach((v, i) => {
-        const td = el('td');
-        if (i === 1) td.appendChild(el('span', { class: 'tag ' + statusTag(esc(v)) }, esc(v)));
-        else td.textContent = esc(v);
-        tr.appendChild(td);
-      });
-      const actTd = el('td');
-      if (['admin','operator'].includes(userRole)) {
-        const btn = el('button', { class: 'btn-del' }, '✕');
-        btn.addEventListener('click', async () => { await api('DELETE','/policies/'+p.id).catch(()=>{}); loadPolicies(); toast('Policy deleted','ok'); });
-        actTd.appendChild(btn);
-      }
-      tr.appendChild(actTd);
-      tbody.appendChild(tr);
-    });
-  } catch (_) {}
-}
-
-document.getElementById('add-policy-btn')?.addEventListener('click', () => openModal('modal-policy'));
-document.getElementById('p-save-btn')?.addEventListener('click', async () => {
-  const name     = document.getElementById('p-name').value.trim();
-  const action   = document.getElementById('p-action').value;
-  const priority = parseInt(document.getElementById('p-priority').value||'0',10);
-  const src_cidr = document.getElementById('p-src').value.trim()||null;
-  const dst_host = document.getElementById('p-dst').value.trim()||null;
-  const dst_ports= document.getElementById('p-ports').value.trim()||null;
-  try {
-    await api('POST', '/policies', { name, action, priority, src_cidr, dst_host, dst_ports });
-    closeModal('modal-policy');
-    toast('Policy created', 'ok');
-    loadPolicies();
-  } catch (e) { if (!e.sessionExpired) toast('Error: ' + e.message, 'err'); }
-});
-
-// ── Audit ─────────────────────────────────────────────────────────────────────
-async function loadAudit() {
-  try {
-    const rows  = await api('GET', '/audit?limit=200');
-    const tbody = document.getElementById('audit-tbody');
-    if (!tbody) return;
-    tbody.textContent = '';
-    rows.forEach(r => {
-      const ok = (r.result||'').startsWith('success');
-      const tr = el('tr');
-      [(r.ts||'').slice(0,16), r.event, r.actor, r.target||'—', r.result].forEach(v => tr.appendChild(el('td',{},esc(v))));
-      if (!ok) tr.style.color = 'var(--err)';
-      tbody.appendChild(tr);
-    });
-  } catch (_) {}
-}
-document.getElementById('audit-refresh-btn')?.addEventListener('click', loadAudit);
-
-// ── JWT Creator ────────────────────────────────────────────────────────────────
-/** Base64url-encode a UTF-8 string safely (handles non-Latin1 / unicode input). */
-function b64url(str) {
-  const bytes = new TextEncoder().encode(str);
-  const binary = Array.from(bytes, b => String.fromCharCode(b)).join('');
-  return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-}
-function b64dec(str) { str=str.replace(/-/g,'+').replace(/_/g,'/'); while(str.length%4)str+='='; return atob(str); }
-async function hmacSha256(secret, data) {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey('raw', enc.encode(secret), {name:'HMAC',hash:'SHA-256'}, false, ['sign']);
-  const sig  = await crypto.subtle.sign('HMAC', key, enc.encode(data));
-  return b64url(String.fromCharCode(...new Uint8Array(sig)));
-}
-
-document.getElementById('jwt-gen-btn')?.addEventListener('click', async () => {
-  const secret  = document.getElementById('jwt-secret').value;
-  const sub     = document.getElementById('jwt-sub').value.trim();
-  const aud     = document.getElementById('jwt-aud').value.trim();
-  const expSecs = parseInt(document.getElementById('jwt-exp').value, 10);
-  const alertEl = document.getElementById('jwt-alert');
-  let extra = {};
-  try {
-    const raw = document.getElementById('jwt-extra').value.trim();
-    if (raw) extra = JSON.parse(raw);
-  } catch { if(alertEl){alertEl.className='alert alert-err';alertEl.textContent='Extra claims: invalid JSON';} return; }
-
-  const now = Math.floor(Date.now()/1000);
-  const payload = { iat: now, ...extra };
-  if (sub) payload.sub = sub;
-  if (aud) payload.aud = aud;
-  if (expSecs > 0) payload.exp = now + expSecs;
-  const header = { alg:'HS256', typ:'JWT' };
-
-  const hB64 = b64url(JSON.stringify(header));
-  const pB64 = b64url(JSON.stringify(payload));
-  const sig  = await hmacSha256(secret, hB64+'.'+pB64);
-  const jwt  = hB64+'.'+pB64+'.'+sig;
-
-  const out = document.getElementById('jwt-output');
-  out.textContent = '';
-  const parts = jwt.split('.');
-  const classes = ['jwt-part-h','jwt-part-p','jwt-part-s'];
-  parts.forEach((part, i) => {
-    if (i > 0) { const dot = el('span',{class:'jwt-dot'},'.'); out.appendChild(dot); }
-    out.appendChild(el('span',{class:classes[i]},part));
-  });
-  const cpBtn = document.getElementById('jwt-copy-btn');
-  if (cpBtn) cpBtn.onclick = () => { navigator.clipboard.writeText(jwt); cpBtn.textContent='Copied!'; setTimeout(()=>{cpBtn.textContent='Copy';},1500); };
-
-  document.getElementById('jwt-decoded').textContent = JSON.stringify({header,payload},null,2);
-  if(alertEl) alertEl.textContent='';
-});
-
-document.getElementById('jwt-decode-btn')?.addEventListener('click', async () => {
-  const raw    = document.getElementById('jwt-decode-in').value.trim();
-  const secret = document.getElementById('jwt-decode-sec').value;
-  const out    = document.getElementById('jwt-decode-out');
-  try {
-    const [hP,pP,sP] = raw.split('.');
-    const header  = JSON.parse(b64dec(hP));
-    const payload = JSON.parse(b64dec(pP));
-    let verified  = 'not verified (no secret)';
-    if (secret) {
-      const expected = await hmacSha256(secret, hP+'.'+pP);
-      verified = expected === sP ? '✅ Signature VALID' : '❌ Signature INVALID';
-    }
-    out.textContent = JSON.stringify({header,payload,verified},null,2);
-  } catch { out.textContent = '⚠️ Could not decode token — check format'; }
-});
-
-// ── Modals ────────────────────────────────────────────────────────────────────
-function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
-function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
-
-document.querySelectorAll('.modal-x, [data-modal]').forEach(btn => {
-  btn.addEventListener('click', () => closeModal(btn.dataset.modal || btn.closest('.modal-overlay')?.id));
-});
-document.querySelectorAll('.modal-overlay').forEach(ov => {
-  ov.addEventListener('click', e => { if (e.target === ov) closeModal(ov.id); });
-});
-
-// ── Docs ──────────────────────────────────────────────────────────────────────
-/**
- * Build a sanitized DOM fragment from an HTML string.
- * Only an allowlist of tags is passed through; all other elements are unwrapped
- * (their children are preserved but the element itself is dropped).
- * Attributes are stripped except href/target on <a> elements, with protocol filtering.
- */
-function buildSafeDocFragment(html) {
-  const parser  = new DOMParser();
-  const parsed  = parser.parseFromString(String(html ?? ''), 'text/html');
-  const fragment = document.createDocumentFragment();
-  const allowedTags = new Set([
-    'H3','H4','P','UL','OL','LI','PRE','CODE','STRONG','EM','A','BR','SPAN',
+async function loadOverview() {
+  const [nodes, sessions, policies, audit] = await Promise.all([
+    api('GET', '/nodes'),
+    api('GET', '/sessions'),
+    api('GET', '/policies'),
+    api('GET', '/audit?limit=200').catch(() => []),
   ]);
-  const allowedLinkProtocols = new Set(['http:','https:','mailto:','tel:']);
 
-  function sanitizeNode(node) {
-    if (node.nodeType === Node.TEXT_NODE)
-      return document.createTextNode(node.textContent || '');
-    if (node.nodeType !== Node.ELEMENT_NODE) return null;
+  qs('stat-nodes').textContent = nodes.length;
+  qs('stat-sessions').textContent = sessions.filter(s => s.status === 'active').length;
+  qs('stat-policies').textContent = policies.length;
+  qs('stat-audit').textContent = audit.length;
+}
 
-    if (!allowedTags.has(node.tagName)) {
-      // Unwrap: keep children, drop the tag itself
-      const frag = document.createDocumentFragment();
-      node.childNodes.forEach(child => {
-        const safe = sanitizeNode(child);
-        if (safe) frag.appendChild(safe);
-      });
-      return frag;
-    }
+async function loadNodes() {
+  const nodes = await api('GET', '/nodes');
+  const tbody = qs('nodes-tbody');
+  tbody.textContent = '';
 
-    const safeEl = document.createElement(node.tagName.toLowerCase());
+  nodes.forEach(node => {
+    const tr = document.createElement('tr');
+    appendCell(tr, node.host);
+    appendCell(tr, node.port);
+    appendCell(tr, node.role);
+    appendCell(tr, node.region);
+    appendCell(tr, node.status);
+    const controls = appendCell(tr);
 
-    if (node.tagName === 'A') {
-      const href = node.getAttribute('href');
-      if (href) {
+    controls.appendChild(rowActionButton('Delete', 'danger', async () => {
+      try {
+        await api('DELETE', `/nodes/${node.id}`);
+        await refreshAll();
+        toast('Node deleted');
+      } catch (err) {
+        toast(err.message, 'err');
+      }
+    }));
+
+    tbody.appendChild(tr);
+  });
+}
+
+async function loadSessions() {
+  const sessions = await api('GET', '/sessions');
+  const tbody = qs('sessions-tbody');
+  tbody.textContent = '';
+
+  sessions.forEach(session => {
+    const tr = document.createElement('tr');
+    appendCell(tr, session.id);
+    appendCell(tr, session.client_ip);
+    appendCell(tr, session.destination);
+    appendCell(tr, session.status);
+    const controls = appendCell(tr);
+
+    if (session.status === 'active') {
+      controls.appendChild(rowActionButton('Terminate', 'danger', async () => {
         try {
-          const url = new URL(href, window.location.origin);
-          if (allowedLinkProtocols.has(url.protocol)) safeEl.setAttribute('href', href);
-        } catch (_) { /* drop invalid URL */ }
-      }
-      if (node.getAttribute('target') === '_blank') {
-        safeEl.setAttribute('target', '_blank');
-        safeEl.setAttribute('rel', 'noopener noreferrer');
-      }
+          await api('DELETE', `/sessions/${session.id}`);
+          await refreshAll();
+          toast('Session terminated');
+        } catch (err) {
+          toast(err.message, 'err');
+        }
+      }));
     }
 
-    node.childNodes.forEach(child => {
-      const safe = sanitizeNode(child);
-      if (safe) safeEl.appendChild(safe);
-    });
-    return safeEl;
-  }
-
-  parsed.body.childNodes.forEach(node => {
-    const safe = sanitizeNode(node);
-    if (safe) fragment.appendChild(safe);
-  });
-  return fragment;
-}
-
-function renderDoc(key) {
-  const data = DOCS[key];
-  const body = document.getElementById('doc-body');
-  if (!body || !data) return;
-  body.textContent = '';
-  body.appendChild(buildSafeDocFragment(data.body));
-  document.querySelectorAll('.docs-nav-item').forEach(item => {
-    item.classList.toggle('active', item.dataset.doc === key);
+    tbody.appendChild(tr);
   });
 }
 
-const DOCS = {
-  intro: {
-    title: 'Introduction',
-    body: `<h3>What is logrodzyni?</h3>
-<p>logrodzyni is a <strong>universal-purpose acceleration platform</strong> — an integrated system delivering a high-performance proxy engine, a distributed shard framework, an experimental programming language (HoloLang), and an intelligent operating canvas, all governed from one interface.</p>
-<h4>The Four Pillars</h4>
-<ul>
-  <li><strong>Proxy Effective Engine (logrodzyni)</strong> — L4/L7 traffic routing with mTLS, real-time ACL enforcement, and dynamic upstream cluster management. The core relay powering every hop.</li>
-  <li><strong>Shard Framework — All-Round</strong> — Distributed data partitioning using tensor objects, graph-collected data, and encrypted block records. Tensors carry data; shards coordinate the network-regulated exchange.</li>
-  <li><strong>HoloLang</strong> — An experimental programming language for processing pipelines and device-level programming. Ships with its own native compiler. Methodology-first, kaizen-inspired, macro-mapping aware.</li>
-  <li><strong>Canvas IDE / Operating Systems</strong> — Collects all pillars. Machine Learning and Neural Networks built into a Domain Specific Language, C Preprocessor integration, and Proto-based extensibility.</li>
-</ul>
-<h4>Architecture</h4>
-<p>logrodzyni uses a layered circuit model: <code>Ingress Gateway → Relay Nodes → Egress Node → Policy Engine</code>. All inter-service communication is protected by mTLS with short-lived leaf certificates issued by the shared-security CA.</p>
-<h4>Status</h4>
-<p>The project is currently in active development and has not yet been publicly released. Documentation is being filled in progressively as features stabilise. <em>Watch this space for updates.</em></p>`
-  },
-  quickstart: {
-    title: 'Quickstart',
-    body: `<h3>Get Started in Minutes</h3>
-<h4>1. Open the control plane</h4>
-<p>Click <strong>Open Control Plane</strong> from the landing page. The UI opens directly in viewer mode so you can explore immediately.</p>
-<h4>2. Register your first node</h4>
-<pre>POST /api/nodes
-{
-  "host": "10.0.0.1",
-  "port": 1080,
-  "role": "relay",
-  "region": "us-east-1"
-}</pre>
-<h4>3. Configure a policy</h4>
-<pre>POST /api/policies
-{
-  "name": "allow-all",
-  "action": "allow",
-  "priority": 10
-}</pre>
-<h4>4. Obtain a JWT</h4>
-<p>Use the built-in <strong>JWT Creator</strong> page to mint and sign tokens, or call <code>POST /api/auth/login</code> directly.</p>`
-  },
-  'auth-doc': {
-    title: 'Authentication',
-    body: `<h3>Authentication Methods</h3>
-<h4>Password</h4>
-<p>Standard username + bcrypt password authentication. Credentials are never stored in plain text.</p>
-<pre>POST /api/auth/login
-{ "username": "admin", "password": "secret" }</pre>
-<h4>SHA-256 Key</h4>
-<p>Authenticate with a 64-char hex SHA-256 key. The key is hashed client-side via Web Crypto before transmission.</p>
-<pre>POST /api/auth/login/sha256
-{ "username": "operator", "key": "&lt;hex&gt;" }</pre>
-<h4>MetaMask / Wallet</h4>
-<p>EIP-191 challenge-response authentication. Request a challenge, sign with <code>personal_sign</code>, submit the signature. No gas or transaction required.</p>
-<h4>Guest</h4>
-<p>Ephemeral read-only viewer token. Expires in 2 hours. No credentials required. No account created.</p>
-<h4>Session Persistence</h4>
-<p>Your session token is stored in <code>localStorage</code> and survives browser restarts. Sign out explicitly to clear it.</p>`
-  },
-  'proxy-doc': {
-    title: 'Proxy Layer',
-    body: `<h3>Proxy Effective Engine — logrodzyni</h3>
-<p>The proxy layer is the core relay of logrodzyni. It handles all incoming traffic, applies ACL policies, performs TLS termination, and load-balances across registered upstream nodes.</p>
-<h4>Node Roles</h4>
-<ul>
-  <li><code>ingress</code> — Public-facing entry point, handles TLS + client auth.</li>
-  <li><code>relay</code> — Internal hop node, forwards traffic between ingress and egress.</li>
-  <li><code>egress</code> — Connects to the final upstream destination.</li>
-</ul>
-<h4>Protocols</h4>
-<p>SOCKS5 (RFC 1928) and HTTP CONNECT on configurable ports. Bidirectional async relay using Boost.Asio epoll I/O. Up to 10,000 concurrent sessions per relay node.</p>
-<h4>Performance</h4>
-<p>Target: &lt;5ms P99 overhead per hop; &lt;50ms end-to-end for a 3-hop circuit; 1 Gbps+ aggregate throughput.</p>`
-  },
-  'shards-doc': {
-    title: 'Shard Framework',
-    body: `<h3>Shard Framework — All-Round</h3>
-<p>The Shard Framework is the distributed data backbone of logrodzyni. It provides automatic data partitioning using consistent hashing and introduces a <strong>tensor-based object model</strong> for data exchange across the network.</p>
-<h4>Data Model</h4>
-<ul>
-  <li><strong>Tensor objects</strong> — A tensor is an object with assigned data. When two tensors exist in the same environment, they share the same underlying data. Think of it like assigning an object reference — same environment, same data.</li>
-  <li><strong>Graph-collected data</strong> — Tensors collect data from graphs. Graph nodes represent data relationships; edges encode the flow between tensors.</li>
-  <li><strong>Blocks</strong> — A block registers graph and shard data, then persistently saves it in <code>[~]</code> encrypted form — safe for public distribution under kaizen/lean principles.</li>
-  <li><strong>Attribute-driven discovery</strong> — Tensors carry attributes that define what data they hold. When tensors with matching attributes find each other across the network, they exchange data via a network-regulated method. Open registry — no centralised coordinator.</li>
-</ul>
-<h4>Key Features</h4>
-<ul>
-  <li>Consistent hashing ring with virtual nodes</li>
-  <li>Zero-downtime rebalancing triggered by node join/leave</li>
-  <li>Cross-shard query routing at the gateway layer</li>
-  <li>Hot-shard detection and automatic split</li>
-  <li>Macro and algorithm mappings for record persistence</li>
-  <li>Encrypted block storage — <code>[~]</code> format</li>
-</ul>
-<p><em>📋 Full tensor specification and block format — coming soon when the project is publicly released.</em></p>`
-  },
-  'holo-doc': {
-    title: 'Holography',
-    body: `<h3>Holography</h3>
-<p>Multi-region state replication with causal consistency guarantees. Holographic projections allow you to inspect a live snapshot of any region's data topology without disrupting production traffic.</p>
-<h4>Consistency Modes</h4>
-<ul>
-  <li><code>causal</code> — Reads always reflect causally prior writes. Default for user-state projections.</li>
-  <li><code>eventual</code> — Best-effort propagation. Suitable for policy mirrors and configuration data.</li>
-  <li><code>strong</code> — Linearizable reads. Use for financial or critical coordination data.</li>
-</ul>
-<h4>Relationship to HoloLang</h4>
-<p>HoloLang, the experimental processing language, takes its name and some of its tensor-sharing semantics from this holographic replication model. See the <strong>HoloLang</strong> section for details on the language itself.</p>`
-  },
-  'hololang-doc': {
-    title: 'HoloLang',
-    body: `<h3>HoloLang — Experimental Language</h3>
-<p>HoloLang is an experimental programming language purpose-built for <strong>processing pipelines</strong> and <strong>device-level programming</strong>. It ships with its own native compiler and follows a deliberate, methodology-first approach to language and system design.</p>
-<h4>Design Philosophy</h4>
-<ul>
-  <li>Kaizen-inspired incremental design — every construct has a minimal, deliberate purpose.</li>
-  <li>Lean programming model — no waste; every token serves the pipeline.</li>
-  <li>Macro and algorithm mappings baked into the language grammar.</li>
-  <li>First-class support for tensor-like data objects with graph-aware attributes.</li>
-  <li>Open registry semantics — free for all, no admin gating.</li>
-</ul>
-<h4>Core Concepts</h4>
-<ul>
-  <li><strong>Tensors as objects</strong> — Assign data to a tensor; sharing the same environment means sharing the same data.</li>
-  <li><strong>Attribute-driven networking</strong> — Tensors discover peers by matching attributes and exchange data via network-regulated channels.</li>
-  <li><strong>Encrypted records</strong> — All shard/tensor data is persisted in <code>[~]</code> encrypted form for safe public distribution.</li>
-  <li><strong>Macro mappings</strong> — Algorithmic patterns encoded as macros enable safe, repeatable transformations across devices.</li>
-</ul>
-<h4>Compiler</h4>
-<p>The HoloLang compiler is a native toolchain purpose-built for the language, targeting processing units and device-level execution environments. The compiler is currently in active development.</p>
-<p><em>📋 Full language specification, grammar, and compiler binaries — coming soon when the project is publicly released.</em></p>`
-  },
-  'os-doc': {
-    title: 'Canvas IDE & Oper. Systems',
-    body: `<h3>Canvas IDE — Operating Systems</h3>
-<p>The Operating Systems pillar collects all four logrodzyni components and delivers them through <strong>Canvas IDE</strong> — an integrated development environment with Machine Learning and Neural Networks built directly into its Domain Specific Language.</p>
-<h4>Canvas IDE</h4>
-<ul>
-  <li><strong>Domain Specific Language (DSL)</strong> — Purpose-built for expressing proxy routing, shard topology, holographic projections, and ML pipeline configuration in one unified grammar.</li>
-  <li><strong>Machine Learning built-in</strong> — Training, inference, and anomaly detection are first-class language constructs, not bolted-on libraries.</li>
-  <li><strong>Neural Network primitives</strong> — Graph-based NN definitions directly in the IDE grammar, compatible with the Shard tensor model.</li>
-  <li><strong>C Preprocessor integration</strong> — Macro expansion and conditional compilation at the IDE level for zero-overhead abstractions.</li>
-  <li><strong>Proto extensibility</strong> — Protocol Buffer definitions for inter-service communication schemas, enabling typed cross-component contracts.</li>
-</ul>
-<h4>Current Capabilities</h4>
-<ul>
-  <li>Real-time process orchestration and resource scheduling</li>
-  <li>CPU/memory threshold alerting with ML anomaly baseline</li>
-  <li>Automated runbook execution on alert trigger</li>
-  <li>Cron-style job scheduling with distributed locking</li>
-</ul>
-<p><em>📋 Canvas IDE full specification, language grammar, and IDE release — coming soon when the project is publicly released.</em></p>`
-  },
-  'api-auth': {
-    title: 'Auth API Reference',
-    body: `<h3>Auth Endpoints</h3>
-<pre>POST /api/auth/register      — Registration disabled (returns 410 Gone)
-POST /api/auth/login         — Password login
-POST /api/auth/login/sha256  — SHA-256 key login
-GET  /api/auth/wallet/challenge — Request wallet challenge nonce
-POST /api/auth/wallet/verify — Verify wallet signature (EIP-191)
-POST /api/auth/guest         — Guest token (requires {"ping":"ping"}, returns pong + telemetry)
-POST /api/auth/logout        — Logout (client discards token)
-GET  /api/account            — Removed endpoint (returns 404 Not Found)
-PATCH /api/account           — Removed endpoint (returns 404 Not Found)</pre>
-<h4>Response</h4>
-<p>Auth login endpoints return token payloads on success. Guest auth additionally returns <code>pong</code> and <code>telemetry</code>. Include tokens as <code>Authorization: Bearer &lt;token&gt;</code> in subsequent requests.</p>
-<h4>Roles</h4>
-<pre>viewer   — read-only access (default for guests)
-operator — read/write nodes, sessions, policies
-admin    — full CRUD including user management</pre>`
-  },
-  'api-nodes': {
-    title: 'Nodes API',
-    body: `<h3>Nodes API</h3>
-<pre>GET    /api/nodes        — List all nodes (viewer+)
-POST   /api/nodes        — Register node (operator+)
-GET    /api/nodes/:id    — Get node (viewer+)
-PUT    /api/nodes/:id    — Update node (operator+)
-DELETE /api/nodes/:id    — Delete node (admin)</pre>
-<h4>Node Object</h4>
-<pre>{
-  "id": "uuid",
-  "host": "10.0.0.1",
-  "port": 1080,
-  "role": "relay",
-  "region": "us-east-1",
-  "status": "active",
-  "created_at": "2026-01-01T00:00:00Z"
-}</pre>`
-  },
-  'api-jwt': {
-    title: 'JWT Guide',
-    body: `<h3>JWT Security Guide</h3>
-<h4>Best Practices</h4>
-<ul>
-  <li>Always set an <code>exp</code> claim. Short-lived tokens (≤8h) reduce blast radius on theft.</li>
-  <li>Store tokens in <code>httpOnly</code> cookies or memory — never <code>localStorage</code> in untrusted environments. logrodzyni uses <code>localStorage</code> for convenience; evaluate your own threat model.</li>
-  <li>Always verify the <code>alg</code> header server-side and reject <code>alg:none</code>.</li>
-  <li>Rotate signing secrets regularly. Keep an old-key grace period for in-flight tokens.</li>
-  <li>Never embed sensitive PII in the payload — it's only base64, not encrypted.</li>
-  <li>Use short claim names (<code>sub</code>, <code>iss</code>, <code>aud</code>) per RFC 7519.</li>
-</ul>
-<h4>logrodzyni JWT Structure</h4>
-<pre>Header: { "alg": "HS256", "typ": "JWT" }
-Payload: { "id", "username", "role", "authType", "iat", "exp" }</pre>`
-  },
-};
+async function loadPolicies() {
+  const policies = await api('GET', '/policies');
+  const tbody = qs('policies-tbody');
+  tbody.textContent = '';
 
-document.querySelectorAll('.docs-nav-item').forEach(item => {
-  item.addEventListener('click', () => renderDoc(item.dataset.doc));
-});
+  policies.forEach(policy => {
+    const tr = document.createElement('tr');
+    appendCell(tr, policy.name);
+    appendCell(tr, policy.action);
+    appendCell(tr, policy.priority);
+    appendCell(tr, policy.src_cidr);
+    appendCell(tr, `${policy.dst_host || ''}${policy.dst_ports ? `:${policy.dst_ports}` : ''}`);
+    const controls = appendCell(tr);
 
-// ── Global escape key ─────────────────────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    document.querySelectorAll('.modal-overlay.open').forEach(m => closeModal(m.id));
+    controls.appendChild(rowActionButton('Delete', 'danger', async () => {
+      try {
+        await api('DELETE', `/policies/${policy.id}`);
+        await refreshAll();
+        toast('Policy deleted');
+      } catch (err) {
+        toast(err.message, 'err');
+      }
+    }));
+
+    tbody.appendChild(tr);
+  });
+}
+
+async function loadAudit() {
+  const rawLimit = Number(qs('audit-limit').value);
+  const limit = Number.isFinite(rawLimit)
+    ? Math.min(Math.max(rawLimit, AUDIT_LIMIT_MIN), AUDIT_LIMIT_MAX)
+    : AUDIT_LIMIT_DEFAULT;
+  const audit = await api('GET', `/audit?limit=${limit}`);
+  const tbody = qs('audit-tbody');
+  tbody.textContent = '';
+
+  audit.forEach(item => {
+    const tr = document.createElement('tr');
+    appendCell(tr, item.ts);
+    appendCell(tr, item.event);
+    appendCell(tr, item.actor);
+    appendCell(tr, item.result);
+    appendCell(tr, item.target);
+    tbody.appendChild(tr);
+  });
+}
+
+async function createNode() {
+  const host = qs('node-host').value.trim();
+  const port = Number(qs('node-port').value);
+  if (!host) throw new Error('Host is required');
+  if (!Number.isInteger(port) || port < NODE_PORT_MIN || port > NODE_PORT_MAX) {
+    throw new Error(`Port must be an integer between ${NODE_PORT_MIN} and ${NODE_PORT_MAX}`);
   }
-});
 
-// ── Auto-restore ──────────────────────────────────────────────────────────────
-// (handled above via `if (token) showApp()` at init)
+  const body = {
+    host,
+    port,
+    role: qs('node-role').value,
+    region: qs('node-region').value.trim() || 'default',
+    status: qs('node-status').value.trim() || 'pending',
+  };
+  await api('POST', '/nodes', body);
+  qs('node-host').value = '';
+  qs('node-port').value = '';
+  toast('Node created');
+  await refreshAll();
+}
+
+async function createSession() {
+  const body = {
+    client_ip: qs('session-client-ip').value.trim() || undefined,
+    destination: qs('session-destination').value.trim() || '',
+    node_id: qs('session-node-id').value.trim() || null,
+  };
+  await api('POST', '/sessions', body);
+  qs('session-client-ip').value = '';
+  qs('session-destination').value = '';
+  qs('session-node-id').value = '';
+  toast('Session created');
+  await refreshAll();
+}
+
+async function createPolicy() {
+  const priorityRaw = Number(qs('policy-priority').value || 0);
+  if (!Number.isFinite(priorityRaw)) throw new Error('Policy priority must be numeric');
+
+  const body = {
+    name: qs('policy-name').value.trim(),
+    action: qs('policy-action').value,
+    priority: priorityRaw,
+    src_cidr: qs('policy-src').value.trim() || null,
+    dst_host: qs('policy-dst-host').value.trim() || null,
+    dst_ports: qs('policy-dst-ports').value.trim() || null,
+  };
+  await api('POST', '/policies', body);
+  qs('policy-name').value = '';
+  qs('policy-src').value = '';
+  qs('policy-dst-host').value = '';
+  qs('policy-dst-ports').value = '';
+  toast('Policy created');
+  await refreshAll();
+}
+
+async function refreshAll() {
+  try {
+    await Promise.all([loadOverview(), loadNodes(), loadSessions(), loadPolicies(), loadAudit()]);
+    setLastRefresh();
+  } catch (err) {
+    toast(err.message, 'err');
+  }
+}
+
+function bindEvents() {
+  document.querySelectorAll('.tab[data-page]').forEach(tab => {
+    tab.addEventListener('click', () => switchPage(tab.dataset.page));
+  });
+
+  qs('refresh-all').addEventListener('click', refreshAll);
+  qs('audit-refresh').addEventListener('click', async () => {
+    try {
+      await loadAudit();
+      setLastRefresh();
+    } catch (err) {
+      toast(err.message, 'err');
+    }
+  });
+
+  qs('node-create').addEventListener('click', async () => {
+    try { await createNode(); } catch (err) { toast(err.message, 'err'); }
+  });
+  qs('session-create').addEventListener('click', async () => {
+    try { await createSession(); } catch (err) { toast(err.message, 'err'); }
+  });
+  qs('policy-create').addEventListener('click', async () => {
+    try { await createPolicy(); } catch (err) { toast(err.message, 'err'); }
+  });
+}
+
+bindEvents();
+refreshAll();
