@@ -149,7 +149,7 @@ async function enterApp() {
     if (!window.__API_BASE__) {
       // No backend configured (e.g. hosted on GitHub Pages without API_BASE_URL set).
       // Create a local guest session so the UI is accessible as a demo.
-      setAuth({ token: 'demo-guest', role: 'viewer', username: 'guest' });
+      setAuth({ token: 'demo.no-backend', role: 'viewer', username: 'guest' });
     } else {
       const data = await api('POST', '/auth/guest', { ping: 'ping' });
       setAuth(data);

@@ -264,6 +264,7 @@ tbody td:first-child{color:var(--white);font-weight:500}
 .alert-ok{background:rgba(74,222,128,.08);color:var(--ok);border:1px solid rgba(74,222,128,.18)}
 .alert-err{background:rgba(248,113,113,.08);color:var(--err);border:1px solid rgba(248,113,113,.18)}
 .alert-info{background:rgba(34,197,94,.07);color:var(--g1);border:1px solid var(--border)}
+.demo-mode-bar{margin:1rem 1rem 0}
 
 /* jwt */
 .jwt-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
@@ -556,7 +557,7 @@ tbody td:first-child{color:var(--white);font-weight:500}
 
     <main class="content">
 
-      <div id="demo-mode-bar" class="alert alert-info" style="display:none;margin:1rem 1rem 0">⚠️ &nbsp;No API backend configured — this is a UI preview. Live data is unavailable. To connect a control-plane server, set <code>API_BASE_URL</code> in the repository variables and redeploy.</div>
+      <div id="demo-mode-bar" class="alert alert-info demo-mode-bar" style="display:none">⚠️ &nbsp;No API backend configured — this is a UI preview. Live data is unavailable. To connect a control-plane server, set <code>API_BASE_URL</code> in the repository variables and redeploy.</div>
 
       <!-- Dashboard -->
       <div class="page active" id="page-dashboard">
