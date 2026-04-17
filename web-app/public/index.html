@@ -1,906 +1,310 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Logo — Unified Control Plane</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logo Control Plane</title>
   <style>
-:root{
-  --bg:#050c05;--panel:#091009;--panel2:#0f1a0f;--panel3:#152015;
-  --g1:#22c55e;--g2:#16a34a;--g3:#4ade80;--g4:#86efac;
-  --glow:rgba(34,197,94,.4);--glow2:rgba(34,197,94,.12);--glow3:rgba(34,197,94,.06);
-  --white:#f0fdf4;--off:#dcfce7;--muted:#6b7280;--muted2:#9ca3af;
-  --border:rgba(34,197,94,.18);--border2:rgba(34,197,94,.08);--border3:rgba(34,197,94,.04);
-  --err:#f87171;--warn:#fbbf24;--ok:#4ade80;
-  --radius:10px;--radius2:16px;--radius3:24px;
-  --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
-  --grad:linear-gradient(135deg,#22c55e,#16a34a);
-  --grad2:linear-gradient(135deg,#4ade80,#22c55e,#16a34a);
-  --grad-bg:linear-gradient(135deg,var(--panel),var(--panel2));
-  --shadow:0 4px 24px rgba(0,0,0,.5);--shadow2:0 12px 48px rgba(0,0,0,.6);
-  --shadow-g:0 0 32px var(--glow);
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:var(--font);background:var(--bg);color:var(--white);min-height:100vh;overflow-x:hidden}
-::selection{background:rgba(34,197,94,.25);color:#fff}
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:rgba(34,197,94,.25);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:rgba(34,197,94,.5)}
+    :root {
+      --bg: #07110a;
+      --panel: #0d1b12;
+      --panel-2: #122419;
+      --text: #e9f9ee;
+      --muted: #9ac5a7;
+      --line: #244733;
+      --brand: #3ddc84;
+      --brand-2: #27b86a;
+      --danger: #ff7b7b;
+      --warn: #f8c46a;
+      --radius: 12px;
+    }
 
-/* ── keyframes ── */
-@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes scaleIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-@keyframes floatSlow{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-@keyframes glow{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 24px 6px var(--glow)}}
-@keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
-@keyframes slideLeft{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}
-@keyframes dashFlow{to{stroke-dashoffset:-20}}
-@keyframes ripple{0%{transform:scale(1);opacity:.6}100%{transform:scale(2.5);opacity:0}}
-@keyframes borderGlow{0%,100%{border-color:rgba(34,197,94,.18)}50%{border-color:rgba(34,197,94,.5)}}
-@keyframes scanLine{0%{top:0}100%{top:100%}}
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top, #133224 0%, var(--bg) 40%);
+      min-height: 100vh;
+    }
 
-/* ── button reset ── */
-button{font-family:var(--font);cursor:pointer}
+    .shell {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
 
-/* ══════════════ LANDING ══════════════ */
-#landing{position:relative;min-height:100vh;display:flex;flex-direction:column}
-#hero-canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.7}
+    .hero {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(120deg, rgba(61,220,132,0.12), rgba(39,184,106,0.04));
+      padding: 24px;
+      margin-bottom: 18px;
+    }
 
-/* nav */
-.land-nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:.85rem 2.5rem;background:rgba(5,12,5,.75);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border3);transition:background .3s}
-.land-nav.scrolled{background:rgba(5,12,5,.95)}
-.nav-logo{display:flex;align-items:center;gap:.55rem;font-size:1.2rem;font-weight:800;color:var(--g1);letter-spacing:-.02em;text-decoration:none;user-select:none}
-.nav-logo svg{width:30px;height:30px;animation:float 4s ease infinite}
-.nav-links{display:flex;gap:1.75rem;list-style:none}
-.nav-links a{color:var(--muted2);text-decoration:none;font-size:.88rem;font-weight:500;transition:color .2s;letter-spacing:.01em}
-.nav-links a:hover{color:var(--g1)}
-.nav-cta{display:flex;gap:.65rem;align-items:center}
+    .hero h1 { margin: 0 0 6px; font-size: 1.9rem; }
+    .hero p { margin: 0; color: var(--muted); }
 
-/* buttons */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;padding:.6rem 1.35rem;border:none;border-radius:var(--radius);font-size:.88rem;font-weight:600;cursor:pointer;transition:all .22s;text-decoration:none;font-family:var(--font);letter-spacing:.01em;white-space:nowrap;position:relative;overflow:hidden;background:transparent}
-.btn-primary{background:var(--grad);color:#000;box-shadow:0 2px 12px rgba(34,197,94,.3)}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(34,197,94,.45)}
-.btn-primary:active{transform:translateY(0)}
-.btn-ghost{color:var(--muted2);border:1px solid var(--border)}
-.btn-ghost:hover{color:var(--g1);border-color:var(--g1);background:var(--glow3)}
-.btn-outline{color:var(--g1);border:1px solid var(--g1)}
-.btn-outline:hover{background:rgba(34,197,94,.08)}
-.btn-muted{background:var(--panel2);color:var(--muted2);border:1px solid var(--border2)}
-.btn-muted:hover{color:var(--white);border-color:var(--border)}
-.btn-danger{background:rgba(248,113,113,.08);color:var(--err);border:1px solid rgba(248,113,113,.2)}
-.btn-danger:hover{background:rgba(248,113,113,.18);border-color:var(--err)}
-.btn-sm{padding:.42rem 1rem;font-size:.82rem}
-.btn-lg{padding:.82rem 2rem;font-size:1rem}
-.btn-block{width:100%;border-radius:var(--radius)}
-.btn-wallet{background:linear-gradient(135deg,#f6851b,#e4761b);color:#fff}
-.btn-wallet:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(246,133,27,.4)}
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 14px 0 18px;
+    }
 
-/* hero */
-.hero{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:10rem 2rem 7rem;min-height:100vh}
-.hero-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(34,197,94,.07);border:1px solid var(--border);border-radius:100px;padding:.35rem 1.1rem;font-size:.78rem;font-weight:700;color:var(--g1);margin-bottom:2rem;letter-spacing:.04em;animation:fadeUp .6s ease both}
-.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--g1);animation:pulse 2s infinite}
-.hero h1{font-size:clamp(2.8rem,7.5vw,5.8rem);font-weight:800;line-height:1.06;letter-spacing:-.045em;margin-bottom:1.5rem;animation:fadeUp .6s .1s ease both}
-.hero h1 em{font-style:normal;background:var(--grad2);background-size:200% 200%;background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gradShift 4s ease infinite}
-.hero p{font-size:1.1rem;color:var(--muted2);max-width:560px;line-height:1.7;margin-bottom:2.5rem;font-weight:400;animation:fadeUp .6s .2s ease both}
-.hero-cta{display:flex;gap:.85rem;flex-wrap:wrap;justify-content:center;animation:fadeUp .6s .3s ease both}
-.hero-stats{display:flex;gap:3.5rem;margin-top:5rem;animation:fadeUp .6s .5s ease both;flex-wrap:wrap;justify-content:center}
-.hero-stat-num{font-size:2.1rem;font-weight:800;color:var(--g1);letter-spacing:-.04em}
-.hero-stat-lbl{font-size:.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-top:.15rem}
-.scroll-hint{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.4rem;color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;opacity:.6}
-.scroll-line{width:1px;height:28px;background:linear-gradient(to bottom,var(--g1),transparent)}
+    .tab {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-weight: 600;
+    }
 
-/* sections */
-.section{position:relative;z-index:1;padding:7rem 2.5rem;max-width:1200px;margin:0 auto}
-.section-bg{background:var(--panel);border-top:1px solid var(--border2);border-bottom:1px solid var(--border2)}
-.section-bg .section{padding:6rem 2.5rem}
-.stag{font-size:.72rem;font-weight:700;color:var(--g1);letter-spacing:.14em;text-transform:uppercase;margin-bottom:.85rem}
-.stitle{font-size:clamp(1.9rem,4vw,2.9rem);font-weight:800;letter-spacing:-.035em;line-height:1.15;margin-bottom:.85rem}
-.ssub{font-size:.95rem;color:var(--muted2);max-width:540px;line-height:1.7}
-.section-hd{margin-bottom:4rem}
-.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem}
-.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.25rem}
-.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
+    .tab.active {
+      border-color: var(--brand);
+      background: rgba(61,220,132,0.18);
+      color: var(--brand);
+    }
 
-/* service cards */
-.svc-card{background:var(--panel);border:1px solid var(--border2);border-radius:var(--radius2);padding:2rem;transition:all .3s;position:relative;overflow:hidden;cursor:pointer}
-.svc-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% -10%,var(--glow2),transparent 65%);opacity:0;transition:opacity .3s}
-.svc-card:hover{border-color:var(--border);transform:translateY(-5px);box-shadow:0 16px 48px rgba(0,0,0,.45)}
-.svc-card:hover::before{opacity:1}
-.svc-icon-wrap{width:54px;height:54px;margin-bottom:1.5rem}
-.svc-card h3{font-size:1.05rem;font-weight:700;margin-bottom:.55rem;letter-spacing:-.01em}
-.svc-card p{font-size:.85rem;color:var(--muted2);line-height:1.65}
-.svc-arr{display:inline-flex;align-items:center;gap:.35rem;font-size:.8rem;color:var(--g1);font-weight:600;margin-top:1.25rem;transition:gap .2s}
-.svc-card:hover .svc-arr{gap:.6rem}
+    .meta {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-bottom: 14px;
+    }
 
-/* feature items */
-.feat-item{display:flex;gap:1.1rem;padding:1.35rem;background:var(--panel2);border:1px solid var(--border2);border-radius:var(--radius2);transition:all .25s}
-.feat-item:hover{border-color:var(--border);transform:translateX(4px)}
-.feat-ico{width:40px;height:40px;min-width:40px;background:rgba(34,197,94,.07);border:1px solid var(--border);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.feat-item h4{font-size:.92rem;font-weight:700;margin-bottom:.3rem;letter-spacing:-.01em}
-.feat-item p{font-size:.82rem;color:var(--muted2);line-height:1.6}
+    .page { display: none; }
+    .page.active { display: block; }
 
-/* stats band */
-.stats-band{position:relative;z-index:1;border-top:1px solid var(--border2);border-bottom:1px solid var(--border2);padding:3.5rem 0;background:var(--panel)}
-.stats-inner{max-width:1100px;margin:0 auto;padding:0 2.5rem;display:flex;justify-content:space-around;flex-wrap:wrap;gap:2rem;text-align:center}
-.sband-num{font-size:2.4rem;font-weight:800;color:var(--g1);letter-spacing:-.04em}
-.sband-lbl{font-size:.73rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-top:.25rem}
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
 
-/* cta band */
-.cta-band{position:relative;z-index:1;text-align:center;padding:8rem 2.5rem;overflow:hidden}
-.cta-band::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(34,197,94,.07),transparent 70%);pointer-events:none}
-.cta-band h2{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;letter-spacing:-.04em;margin-bottom:1rem}
-.cta-band p{font-size:1rem;color:var(--muted2);margin-bottom:2.25rem;max-width:460px;margin-left:auto;margin-right:auto;line-height:1.7}
+    .card {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
 
-/* footer */
-.land-footer{position:relative;z-index:1;border-top:1px solid var(--border2);padding:2.5rem;max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
-.foot-logo{font-size:1rem;font-weight:800;color:var(--g1)}
-.foot-links{display:flex;gap:1.5rem}
-.foot-links a{color:var(--muted);font-size:.82rem;text-decoration:none;transition:color .2s}
-.foot-links a:hover{color:var(--g1)}
-.foot-copy{color:var(--muted);font-size:.78rem}
+    .label { color: var(--muted); font-size: 0.82rem; margin-bottom: 6px; }
+    .value { font-size: 1.5rem; font-weight: 700; color: var(--brand); }
 
-.field{margin-bottom:.95rem}
-.field label{display:block;font-size:.77rem;color:var(--muted2);margin-bottom:.38rem;font-weight:600;letter-spacing:.025em}
-.field input{width:100%;padding:.62rem .9rem;background:rgba(5,12,5,.8);border:1px solid var(--border2);border-radius:var(--radius);color:var(--white);font-size:.9rem;transition:border-color .2s,box-shadow .2s;font-family:var(--font)}
-.field input:focus{outline:none;border-color:var(--g1);box-shadow:0 0 0 3px rgba(34,197,94,.1)}
-.field input::placeholder{color:var(--muted)}
-.field small{font-size:.75rem;color:var(--muted);margin-top:.3rem;display:block}
-.btn:disabled{opacity:.6;cursor:not-allowed;transform:none!important}
-.btn-loading{position:relative;color:transparent!important}
-.btn-loading::after{content:'';position:absolute;width:16px;height:16px;border:2px solid rgba(0,0,0,.35);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.field.field-err input{border-color:var(--err)!important;box-shadow:0 0 0 2px rgba(248,113,113,.18)}
-@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      padding: 14px;
+      margin-bottom: 12px;
+    }
 
-/* ══════════════ APP SHELL ══════════════ */
-#app{display:none}
-#app.open{display:flex;flex-direction:column;min-height:100vh;animation:fadeIn .25s ease}
-.app-header{position:fixed;top:0;left:0;right:0;z-index:200;height:58px;background:rgba(5,12,5,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border2);display:flex;align-items:center;padding:0 1.25rem;gap:1.25rem}
-.app-header-logo{display:flex;align-items:center;gap:.5rem;font-size:1.1rem;font-weight:800;color:var(--g1);letter-spacing:-.02em;min-width:170px}
-.app-header-logo svg{width:26px;height:26px}
-.app-search{flex:1;max-width:380px;position:relative}
-.app-search input{width:100%;padding:.42rem .85rem .42rem 2.2rem;background:var(--panel2);border:1px solid var(--border2);border-radius:var(--radius);color:var(--white);font-size:.84rem;font-family:var(--font)}
-.app-search input:focus{outline:none;border-color:rgba(34,197,94,.4)}
-.search-ico{position:absolute;left:.7rem;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
-.app-hd-right{display:flex;align-items:center;gap:.75rem;margin-left:auto}
-.env-badge{padding:.28rem .75rem;background:rgba(34,197,94,.1);border:1px solid var(--border);border-radius:100px;font-size:.73rem;font-weight:700;color:var(--g1)}
-.hd-user{display:flex;align-items:center;gap:.5rem;padding:.32rem .75rem;background:var(--panel2);border:1px solid var(--border2);border-radius:var(--radius);font-size:.82rem;cursor:pointer;transition:all .2s}
-.hd-user:hover{border-color:var(--border)}
-.hd-av{width:24px;height:24px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;color:#000}
-.role-chip{padding:.18rem .55rem;border-radius:100px;font-size:.7rem;font-weight:700}
-.role-chip.admin{background:rgba(34,197,94,.15);color:var(--g3)}
-.role-chip.operator{background:rgba(74,222,128,.1);color:var(--g4)}
-.role-chip.viewer{background:var(--panel2);color:var(--muted2)}
-.app-layout{display:flex;padding-top:58px;min-height:100vh}
+    .panel h2 { margin: 0 0 10px; font-size: 1.1rem; }
 
-/* sidebar */
-.sidebar{width:210px;min-width:210px;background:var(--panel);border-right:1px solid var(--border2);display:flex;flex-direction:column;position:fixed;top:58px;bottom:0;overflow-y:auto;z-index:100}
-.sb-section{padding:.8rem .7rem .25rem;font-size:.65rem;font-weight:700;color:var(--muted);letter-spacing:.11em;text-transform:uppercase}
-.sb-item{display:flex;align-items:center;gap:.6rem;padding:.6rem .8rem;margin:.1rem .45rem;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:500;color:var(--muted2);transition:all .2s;border:1px solid transparent;position:relative;user-select:none}
-.sb-item:hover{color:var(--white);background:var(--panel2)}
-.sb-item.active{color:var(--g1);background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.15)}
-.sb-item svg{width:16px;height:16px;min-width:16px;flex-shrink:0}
-.sb-badge{margin-left:auto;padding:.1rem .42rem;background:rgba(34,197,94,.1);border-radius:100px;font-size:.66rem;font-weight:700;color:var(--g1)}
-.sb-footer{margin-top:auto;padding:.85rem .7rem;border-top:1px solid var(--border2);font-size:.7rem;color:var(--muted)}
-.online-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--g1);margin-right:.3rem;animation:pulse 2.5s infinite}
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
 
-/* content */
-.content{flex:1;margin-left:210px;padding:1.75rem;min-height:calc(100vh - 58px)}
-.page{display:none}.page.active{display:block;animation:fadeUp .28s ease}
-.pg-hd{margin-bottom:1.75rem;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-.pg-hd h2{font-size:1.45rem;font-weight:800;letter-spacing:-.025em}
-.pg-hd p{font-size:.85rem;color:var(--muted2);margin-top:.25rem}
+    input, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 10px;
+      background: var(--panel-2);
+      color: var(--text);
+    }
 
-/* cards */
-.card{background:var(--panel);border:1px solid var(--border2);border-radius:var(--radius2);padding:1.4rem}
-.card-title{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;margin-bottom:.9rem}
+    button {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 9px 12px;
+      cursor: pointer;
+      font-weight: 600;
+    }
 
-/* stat cards */
-.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:1rem;margin-bottom:1.75rem}
-.stat-card{background:var(--panel);border:1px solid var(--border2);border-radius:var(--radius2);padding:1.2rem 1.4rem;position:relative;overflow:hidden;transition:all .28s}
-.stat-card::after{content:'';position:absolute;top:-10px;right:-10px;width:80px;height:80px;background:radial-gradient(circle,var(--glow2),transparent 70%)}
-.stat-card:hover{border-color:var(--border);transform:translateY(-2px)}
-.sc-ico{position:absolute;top:1.1rem;right:1.1rem;width:34px;height:34px;background:rgba(34,197,94,.08);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center}
-.sc-lbl{font-size:.72rem;color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
-.sc-val{font-size:1.9rem;font-weight:800;letter-spacing:-.04em;margin:.35rem 0 .15rem;color:var(--g1)}
-.sc-sub{font-size:.76rem;color:var(--muted)}
+    button.primary {
+      border-color: var(--brand);
+      background: var(--brand);
+      color: #05210f;
+    }
 
-/* tags */
-.tag{display:inline-flex;align-items:center;gap:.25rem;padding:.18rem .55rem;border-radius:100px;font-size:.7rem;font-weight:700;letter-spacing:.02em;white-space:nowrap}
-.tag-ok{background:rgba(74,222,128,.1);color:var(--ok);border:1px solid rgba(74,222,128,.2)}
-.tag-err{background:rgba(248,113,113,.1);color:var(--err);border:1px solid rgba(248,113,113,.2)}
-.tag-warn{background:rgba(251,191,36,.1);color:var(--warn);border:1px solid rgba(251,191,36,.2)}
-.tag-muted{background:var(--panel2);color:var(--muted2);border:1px solid var(--border2)}
-.tag-accent{background:rgba(34,197,94,.1);color:var(--g1);border:1px solid var(--border)}
-.tag-blue{background:rgba(96,165,250,.1);color:#60a5fa;border:1px solid rgba(96,165,250,.2)}
-.tag-purple{background:rgba(167,139,250,.1);color:#a78bfa;border:1px solid rgba(167,139,250,.2)}
+    button.danger { border-color: #8e3434; color: var(--danger); }
 
-/* table */
-.tw{border-radius:var(--radius2);border:1px solid var(--border2);overflow:hidden}
-table{width:100%;border-collapse:collapse;font-size:.85rem}
-thead th{padding:.8rem 1rem;text-align:left;font-size:.69rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border2);background:var(--panel);white-space:nowrap}
-tbody tr{border-bottom:1px solid var(--border2);transition:background .15s}
-tbody tr:last-child{border-bottom:none}
-tbody tr:hover{background:rgba(34,197,94,.025)}
-tbody td{padding:.75rem 1rem;color:var(--muted2);vertical-align:middle}
-tbody td:first-child{color:var(--white);font-weight:500}
-.tdot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:.35rem;flex-shrink:0}
-.tdot-ok{background:var(--ok);box-shadow:0 0 5px var(--ok)}
-.tdot-err{background:var(--err)}
-.tdot-warn{background:var(--warn)}
-.tdot-muted{background:var(--muted)}
-.btn-del{padding:.28rem .65rem;background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.18);border-radius:6px;color:var(--err);cursor:pointer;font-size:.76rem;font-family:var(--font);transition:all .2s}
-.btn-del:hover{background:rgba(248,113,113,.2);border-color:var(--err)}
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
 
-/* form */
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-.fg{margin-bottom:1.1rem}
-.fg label{display:block;font-size:.77rem;font-weight:600;color:var(--muted2);margin-bottom:.38rem;letter-spacing:.025em}
-.fi,.fsel,.fta{width:100%;padding:.6rem .85rem;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);color:var(--white);font-size:.88rem;font-family:var(--font);transition:border-color .2s,box-shadow .2s}
-.fi:focus,.fsel:focus,.fta:focus{outline:none;border-color:var(--g1);box-shadow:0 0 0 3px rgba(34,197,94,.08)}
-.fi::placeholder,.fta::placeholder{color:var(--muted)}
-.fta{resize:vertical;min-height:90px;font-family:var(--mono);font-size:.82rem}
-.fsel option{background:var(--panel)}
-.fhint{font-size:.74rem;color:var(--muted);margin-top:.28rem}
-.form-row{display:flex;gap:.7rem;justify-content:flex-end;padding-top:.5rem}
+    th, td {
+      text-align: left;
+      padding: 9px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
 
-/* toolbar */
-.toolbar{display:flex;gap:.6rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap}
-.tb-input{padding:.4rem .75rem;background:var(--panel);border:1px solid var(--border2);border-radius:var(--radius);color:var(--white);font-size:.83rem;font-family:var(--font)}
-.tb-input:focus{outline:none;border-color:var(--border)}
+    th { color: var(--muted); font-weight: 600; }
 
-/* alert */
-.alert{padding:.6rem 1rem;border-radius:var(--radius);margin-bottom:.85rem;font-size:.84rem;font-weight:500}
-.alert-ok{background:rgba(74,222,128,.08);color:var(--ok);border:1px solid rgba(74,222,128,.18)}
-.alert-err{background:rgba(248,113,113,.08);color:var(--err);border:1px solid rgba(248,113,113,.18)}
-.alert-info{background:rgba(34,197,94,.07);color:var(--g1);border:1px solid var(--border)}
-.demo-mode-bar{margin:1rem 1rem 0}
+    .toasts {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      display: grid;
+      gap: 8px;
+      z-index: 30;
+    }
 
-/* jwt */
-.jwt-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
-.code-block{background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);padding:1rem;font-family:var(--mono);font-size:.79rem;line-height:1.6;min-height:100px;white-space:pre-wrap;word-break:break-all;position:relative;overflow:hidden}
-.code-area{width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);padding:.9rem;font-family:var(--mono);font-size:.79rem;line-height:1.6;color:var(--white);resize:vertical;font-family:var(--mono)}
-.code-area:focus{outline:none;border-color:var(--g1)}
-.jwt-part-h{color:#f472b6}.jwt-part-p{color:#38bdf8}.jwt-part-s{color:var(--g3)}.jwt-dot{color:var(--muted)}
-.copy-btn{position:absolute;top:.5rem;right:.5rem;padding:.22rem .55rem;background:var(--panel2);border:1px solid var(--border2);border-radius:5px;color:var(--muted);cursor:pointer;font-size:.7rem;font-family:var(--font);transition:all .2s}
-.copy-btn:hover{color:var(--white)}
-.jwt-tips{list-style:none;display:flex;flex-direction:column;gap:.55rem}
-.jwt-tips li{display:flex;gap:.55rem;font-size:.8rem;color:var(--muted2);line-height:1.5}
-.jwt-tips li::before{content:'▸';color:var(--g1);flex-shrink:0;font-size:.75rem;margin-top:.05rem}
+    .toast {
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+      padding: 10px 12px;
+      min-width: 230px;
+    }
 
-/* docs */
-.docs-layout{display:grid;grid-template-columns:185px 1fr;gap:1.25rem}
-.docs-nav{background:var(--panel);border:1px solid var(--border2);border-radius:var(--radius2);padding:.65rem;position:sticky;top:78px;align-self:start}
-.docs-nav-sec{font-size:.65rem;font-weight:700;color:var(--muted);letter-spacing:.11em;text-transform:uppercase;padding:.55rem .7rem .2rem}
-.docs-nav-item{display:block;padding:.48rem .7rem;border-radius:7px;cursor:pointer;font-size:.82rem;color:var(--muted2);transition:all .2s;user-select:none}
-.docs-nav-item:hover{color:var(--white);background:var(--panel2)}
-.docs-nav-item.active{color:var(--g1);background:rgba(34,197,94,.07)}
-.doc-body h3{font-size:1.25rem;font-weight:800;margin-bottom:.75rem;letter-spacing:-.02em}
-.doc-body h4{font-size:.95rem;font-weight:700;margin:1.4rem 0 .55rem;color:var(--g1)}
-.doc-body p{font-size:.88rem;color:var(--muted2);line-height:1.75;margin-bottom:.9rem}
-.doc-body ul{margin:.4rem 0 .9rem 1.4rem;font-size:.88rem;color:var(--muted2);line-height:1.75}
-.doc-body code{background:rgba(34,197,94,.08);border:1px solid var(--border2);padding:.13rem .38rem;border-radius:4px;font-family:var(--mono);font-size:.8rem;color:var(--g3)}
-.doc-body pre{background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);padding:1rem;margin:.85rem 0;overflow-x:auto;font-family:var(--mono);font-size:.8rem;color:var(--g3);line-height:1.6}
+    .toast.err { border-color: #8e3434; color: var(--danger); }
+    .toast.warn { border-color: #856729; color: var(--warn); }
 
-/* modal */
-.modal-overlay{display:none;position:fixed;inset:0;z-index:600;align-items:center;justify-content:center;background:rgba(5,12,5,.88);backdrop-filter:blur(16px)}
-.modal-overlay.open{display:flex;animation:fadeIn .18s ease}
-.modal{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius2);width:100%;max-width:500px;box-shadow:var(--shadow2);animation:scaleIn .22s ease;overflow:hidden}
-.modal-hd{padding:1.4rem 1.6rem;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between}
-.modal-hd h3{font-size:.97rem;font-weight:700}
-.modal-x{background:none;border:1px solid var(--border2);border-radius:7px;width:28px;height:28px;color:var(--muted);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .2s}
-.modal-x:hover{color:var(--white);border-color:var(--border)}
-.modal-bd{padding:1.6rem}
-.modal-ft{padding:1.1rem 1.6rem;border-top:1px solid var(--border2);display:flex;justify-content:flex-end;gap:.65rem}
-
-/* toast */
-#toasts{position:fixed;bottom:1.25rem;right:1.25rem;z-index:1000;display:flex;flex-direction:column;gap:.45rem}
-.toast{padding:.75rem 1.15rem;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);font-size:.84rem;font-weight:500;box-shadow:var(--shadow);animation:slideLeft .28s ease;display:flex;align-items:center;gap:.55rem;max-width:300px}
-.toast-ok{border-left:3px solid var(--ok)}
-.toast-err{border-left:3px solid var(--err)}
-.toast-info{border-left:3px solid var(--g1)}
-
-/* fab */
-.fab{position:fixed;bottom:1.75rem;right:1.75rem;z-index:150}
-.fab-main{width:50px;height:50px;border-radius:50%;background:var(--grad);border:none;color:#000;cursor:pointer;font-size:1.4rem;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(34,197,94,.4);animation:floatSlow 3.5s ease infinite;transition:all .25s}
-.fab-main:hover{transform:scale(1.1);box-shadow:0 8px 28px rgba(34,197,94,.55);animation:none}
-
-/* planning */
-.plan-card{background:var(--panel);border:1px solid var(--border2);border-radius:var(--radius2);padding:1.35rem;margin-bottom:.9rem}
-.plan-card h3{font-size:.92rem;font-weight:700;color:var(--g1);margin-bottom:.7rem;display:flex;align-items:center;gap:.5rem}
-.phase-tag{font-size:.68rem;font-weight:700;padding:.13rem .48rem;border-radius:100px;background:rgba(34,197,94,.12);color:var(--g1)}
-.plan-card p,.plan-card li{font-size:.83rem;color:var(--muted2);line-height:1.6}
-.plan-card ul{padding-left:1.1rem;display:flex;flex-direction:column;gap:.3rem}
-
-/* spinner */
-.spinner{width:28px;height:28px;border:2.5px solid var(--border2);border-top-color:var(--g1);border-radius:50%;animation:spin 1s linear infinite;margin:2rem auto}
-.empty{text-align:center;padding:3.5rem 1rem;color:var(--muted)}
-.empty svg{margin:0 auto .85rem;display:block;opacity:.3}
-
-/* responsive */
-@media(max-width:900px){.nav-links{display:none}.sidebar{display:none}.content{margin-left:0}.jwt-grid,.acc-layout,.docs-layout,.form-grid{grid-template-columns:1fr}}
-@media(max-width:600px){.stats-row{grid-template-columns:1fr 1fr}.hero h1{font-size:2.5rem}}
+    .muted { color: var(--muted); }
   </style>
 </head>
 <body>
+  <div class="shell">
+    <section class="hero">
+      <h1>Logo Control Plane</h1>
+      <p>Redesigned from scratch for direct access. No login accounts. Open operations dashboard.</p>
+    </section>
 
-<!-- ══════════════════════ CANVAS ══════════════════════ -->
-<canvas id="hero-canvas"></canvas>
-
-<!-- ══════════════════════ LANDING ══════════════════════ -->
-<div id="landing">
-  <nav class="land-nav" id="lnav">
-    <a href="#" class="nav-logo">
-      <svg viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="15,1 27,8 27,22 15,29 3,22 3,8" fill="rgba(34,197,94,.12)" stroke="#22c55e" stroke-width="1.4"/>
-        <circle cx="15" cy="15" r="4.5" fill="#22c55e"/>
-        <line x1="15" y1="1" x2="15" y2="10.5" stroke="#22c55e" stroke-width="1" opacity=".5" stroke-dasharray="2 2"/>
-        <line x1="15" y1="19.5" x2="15" y2="29" stroke="#22c55e" stroke-width="1" opacity=".5" stroke-dasharray="2 2"/>
-        <line x1="3" y1="8" x2="10.5" y2="12" stroke="#22c55e" stroke-width="1" opacity=".5" stroke-dasharray="2 2"/>
-        <line x1="19.5" y1="18" x2="27" y2="22" stroke="#22c55e" stroke-width="1" opacity=".5" stroke-dasharray="2 2"/>
-        <line x1="3" y1="22" x2="10.5" y2="18" stroke="#22c55e" stroke-width="1" opacity=".5" stroke-dasharray="2 2"/>
-        <line x1="19.5" y1="12" x2="27" y2="8" stroke="#22c55e" stroke-width="1" opacity=".5" stroke-dasharray="2 2"/>
-      </svg>
-      Logo
-    </a>
-    <ul class="nav-links">
-      <li><a href="#services">Services</a></li>
-      <li><a href="#features">Features</a></li>
-      <li><a href="#" id="nav-docs">Docs</a></li>
-      <li><a href="#">Status</a></li>
-    </ul>
-    <div class="nav-cta">
-      <button class="btn btn-primary btn-sm" id="nav-open-control-plane">Open Control Plane</button>
+    <div class="toolbar" id="tabs">
+      <button class="tab active" data-page="overview">Overview</button>
+      <button class="tab" data-page="nodes">Nodes</button>
+      <button class="tab" data-page="sessions">Sessions</button>
+      <button class="tab" data-page="policies">Policies</button>
+      <button class="tab" data-page="audit">Audit</button>
+      <button class="tab" data-page="docs">Docs</button>
+      <button id="refresh-all" class="primary">Refresh all</button>
     </div>
-  </nav>
 
-  <!-- Hero -->
-  <section class="hero">
-    <div class="hero-badge"><span class="badge-dot"></span>Now in General Availability</div>
-    <h1>The <em>Unified</em><br/>Control Plane</h1>
-    <p>Proxy routing, distributed shards, holographic replication, and operational intelligence — all governed from one beautiful, world-class interface.</p>
-    <div class="hero-cta">
-      <button class="btn btn-primary btn-lg" id="hero-open-control-plane">Open Control Plane →</button>
-    </div>
-    <div class="hero-stats">
-      <div><div class="hero-stat-num">99.99%</div><div class="hero-stat-lbl">Uptime SLA</div></div>
-      <div><div class="hero-stat-num">&lt;2ms</div><div class="hero-stat-lbl">P99 Latency</div></div>
-      <div><div class="hero-stat-num">150+</div><div class="hero-stat-lbl">Edge Nodes</div></div>
-      <div><div class="hero-stat-num">AES-256</div><div class="hero-stat-lbl">Encryption</div></div>
-    </div>
-    <div class="scroll-hint"><div class="scroll-line"></div>scroll</div>
-  </section>
+    <div class="meta">Last refresh: <span id="last-refresh">never</span></div>
 
-  <!-- Services -->
-  <div id="services">
-    <div class="section">
-      <div class="section-hd">
-        <div class="stag">Core Services</div>
-        <h2 class="stitle">Everything your<br/>infrastructure needs</h2>
-        <p class="ssub">Four intelligent pillars that work seamlessly together at any scale.</p>
+    <section class="page active" id="page-overview">
+      <div class="grid">
+        <div class="card"><div class="label">Nodes</div><div class="value" id="stat-nodes">—</div></div>
+        <div class="card"><div class="label">Active sessions</div><div class="value" id="stat-sessions">—</div></div>
+        <div class="card"><div class="label">Policies</div><div class="value" id="stat-policies">—</div></div>
+        <div class="card"><div class="label">Audit events</div><div class="value" id="stat-audit">—</div></div>
       </div>
-      <div class="grid4">
-
-        <!-- Proxy -->
-        <div class="svc-card" data-launch="proxy">
-          <div class="svc-icon-wrap">
-            <svg viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg" width="54" height="54">
-              <circle cx="8" cy="27" r="5.5" stroke="#22c55e" stroke-width="1.5"/>
-              <circle cx="46" cy="14" r="4" stroke="#4ade80" stroke-width="1.5"/>
-              <circle cx="46" cy="27" r="4" stroke="#4ade80" stroke-width="1.5"/>
-              <circle cx="46" cy="40" r="4" stroke="#4ade80" stroke-width="1.5"/>
-              <path d="M13.5 25 Q27 16 42 14" stroke="#22c55e" stroke-width="1.3" stroke-dasharray="3 2.5"><animate attributeName="stroke-dashoffset" from="0" to="-22" dur="1.1s" repeatCount="indefinite"/></path>
-              <path d="M13.5 27 Q27 27 42 27" stroke="#22c55e" stroke-width="1.3" stroke-dasharray="3 2.5"><animate attributeName="stroke-dashoffset" from="0" to="-22" dur="1.4s" repeatCount="indefinite"/></path>
-              <path d="M13.5 29 Q27 38 42 40" stroke="#22c55e" stroke-width="1.3" stroke-dasharray="3 2.5"><animate attributeName="stroke-dashoffset" from="0" to="-22" dur="1.7s" repeatCount="indefinite"/></path>
-              <circle cx="27" cy="27" r="2.5" fill="#22c55e" opacity=".6"><animate attributeName="r" values="2.5;4.5;2.5" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".6;.15;.6" dur="2s" repeatCount="indefinite"/></circle>
-            </svg>
-          </div>
-          <h3>Proxy Effective Engine</h3>
-          <p>Intelligent L4/L7 traffic routing with mTLS termination, real-time ACL enforcement, and dynamic upstream cluster management — the core relay of logrodzyni.</p>
-          <span class="svc-arr">Open dashboard →</span>
-        </div>
-
-        <!-- Shards -->
-        <div class="svc-card" data-launch="shards">
-          <div class="svc-icon-wrap">
-            <svg viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg" width="54" height="54">
-              <polygon points="27,3 51,15 51,39 27,51 3,39 3,15" fill="none" stroke="#22c55e" stroke-width="1.4" opacity=".35"/>
-              <polygon points="27,11 43,20 43,34 27,43 11,34 11,20" fill="none" stroke="#4ade80" stroke-width="1.4"><animateTransform attributeName="transform" type="rotate" from="0 27 27" to="360 27 27" dur="9s" repeatCount="indefinite"/></polygon>
-              <polygon points="27,19 36,24 36,30 27,35 18,30 18,24" fill="rgba(34,197,94,.12)" stroke="#22c55e" stroke-width="1"/>
-              <circle cx="27" cy="3" r="1.8" fill="#4ade80"/><circle cx="51" cy="15" r="1.8" fill="#4ade80"/><circle cx="51" cy="39" r="1.8" fill="#4ade80"/>
-              <circle cx="27" cy="51" r="1.8" fill="#4ade80"/><circle cx="3" cy="39" r="1.8" fill="#4ade80"/><circle cx="3" cy="15" r="1.8" fill="#4ade80"/>
-            </svg>
-          </div>
-          <h3>Shard Framework</h3>
-          <p>Tensor-native distributed data: tensor objects share data across environments; graph-collected records are persisted in encrypted blocks. Open registry, attribute-driven exchange.</p>
-          <span class="svc-arr">Open dashboard →</span>
-        </div>
-
-        <!-- Holography -->
-        <div class="svc-card" data-launch="holography">
-          <div class="svc-icon-wrap">
-            <svg viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg" width="54" height="54">
-              <ellipse cx="27" cy="27" rx="24" ry="9" fill="none" stroke="#22c55e" stroke-width="1.4" opacity=".25"><animate attributeName="ry" values="9;22;9" dur="3.2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".25;.08;.25" dur="3.2s" repeatCount="indefinite"/></ellipse>
-              <ellipse cx="27" cy="27" rx="17" ry="6.5" fill="none" stroke="#4ade80" stroke-width="1.4" opacity=".45"><animate attributeName="ry" values="6.5;15;6.5" dur="3.2s" begin=".5s" repeatCount="indefinite"/><animate attributeName="opacity" values=".45;.15;.45" dur="3.2s" begin=".5s" repeatCount="indefinite"/></ellipse>
-              <ellipse cx="27" cy="27" rx="9" ry="4" fill="none" stroke="#86efac" stroke-width="1.4" opacity=".7"><animate attributeName="ry" values="4;9;4" dur="3.2s" begin="1s" repeatCount="indefinite"/></ellipse>
-              <circle cx="27" cy="27" r="3.5" fill="#22c55e"/>
-              <line x1="27" y1="5" x2="27" y2="23.5" stroke="#22c55e" stroke-width="1" opacity=".4" stroke-dasharray="2 2"/>
-              <line x1="27" y1="30.5" x2="27" y2="49" stroke="#22c55e" stroke-width="1" opacity=".4" stroke-dasharray="2 2"/>
-            </svg>
-          </div>
-          <h3>Holography &amp; HoloLang</h3>
-          <p>Multi-region state replication with causal consistency and live topology projections. Home of HoloLang — the experimental processing language with its own compiler.</p>
-          <span class="svc-arr">Open dashboard →</span>
-        </div>
-
-        <!-- OS -->
-        <div class="svc-card" data-launch="os">
-          <div class="svc-icon-wrap">
-            <svg viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg" width="54" height="54">
-              <rect x="4" y="7" width="46" height="11" rx="3" fill="none" stroke="#22c55e" stroke-width="1.4"/>
-              <rect x="4" y="22" width="46" height="11" rx="3" fill="rgba(34,197,94,.07)" stroke="#4ade80" stroke-width="1.4"><animate attributeName="fill" values="rgba(34,197,94,.07);rgba(34,197,94,.2);rgba(34,197,94,.07)" dur="2.2s" repeatCount="indefinite"/></rect>
-              <rect x="4" y="37" width="46" height="10" rx="3" fill="none" stroke="#22c55e" stroke-width="1.4" opacity=".45"/>
-              <circle cx="10" cy="12.5" r="2" fill="#4ade80"/>
-              <circle cx="10" cy="27.5" r="2" fill="#22c55e"><animate attributeName="fill" values="#22c55e;#4ade80;#22c55e" dur="2.2s" repeatCount="indefinite"/></circle>
-              <circle cx="10" cy="42" r="2" fill="#4ade80" opacity=".35"/>
-              <rect x="17" y="10.5" width="22" height="4" rx="2" fill="rgba(34,197,94,.18)"/>
-              <rect x="17" y="25.5" width="30" height="4" rx="2" fill="rgba(34,197,94,.35)"><animate attributeName="width" values="30;14;30" dur="2.2s" repeatCount="indefinite"/></rect>
-            </svg>
-          </div>
-          <h3>Canvas IDE</h3>
-          <p>Collects all four pillars into one IDE. ML and Neural Networks built into a Domain Specific Language, C Preprocessor, and Proto extensibility — acceleration at every layer.</p>
-          <span class="svc-arr">Open dashboard →</span>
-        </div>
+      <div class="panel">
+        <h2>Platform notes</h2>
+        <ul class="muted">
+          <li>Endpoints are accessible without user accounts.</li>
+          <li>Use Nodes/Sessions/Policies tabs to manage runtime data.</li>
+          <li>Audit log keeps track of every change.</li>
+        </ul>
       </div>
-    </div>
+    </section>
+
+    <section class="page" id="page-nodes">
+      <div class="panel">
+        <h2>Create node</h2>
+        <div class="form-grid">
+          <input id="node-host" placeholder="Host (e.g. 10.0.0.1)" />
+          <input id="node-port" type="number" min="1" max="65535" placeholder="Port" />
+          <select id="node-role"><option value="ingress">ingress</option><option value="relay">relay</option><option value="egress">egress</option></select>
+          <input id="node-region" placeholder="Region" value="default" />
+          <input id="node-status" placeholder="Status" value="pending" />
+        </div>
+        <button id="node-create" class="primary">Create node</button>
+      </div>
+      <div class="panel">
+        <h2>Nodes</h2>
+        <table>
+          <thead><tr><th>Host</th><th>Port</th><th>Role</th><th>Region</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="nodes-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="page" id="page-sessions">
+      <div class="panel">
+        <h2>Create session</h2>
+        <div class="form-grid">
+          <input id="session-client-ip" placeholder="Client IP (optional)" />
+          <input id="session-destination" placeholder="Destination" />
+          <input id="session-node-id" placeholder="Node ID (optional)" />
+        </div>
+        <button id="session-create" class="primary">Create session</button>
+      </div>
+      <div class="panel">
+        <h2>Sessions</h2>
+        <table>
+          <thead><tr><th>ID</th><th>Client IP</th><th>Destination</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="sessions-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="page" id="page-policies">
+      <div class="panel">
+        <h2>Create policy</h2>
+        <div class="form-grid">
+          <input id="policy-name" placeholder="Policy name" />
+          <select id="policy-action"><option value="allow">allow</option><option value="deny">deny</option><option value="rate-limit">rate-limit</option></select>
+          <input id="policy-priority" type="number" placeholder="Priority" value="0" />
+          <input id="policy-src" placeholder="Source CIDR" />
+          <input id="policy-dst-host" placeholder="Destination host" />
+          <input id="policy-dst-ports" placeholder="Destination ports" />
+        </div>
+        <button id="policy-create" class="primary">Create policy</button>
+      </div>
+      <div class="panel">
+        <h2>Policies</h2>
+        <table>
+          <thead><tr><th>Name</th><th>Action</th><th>Priority</th><th>Source</th><th>Destination</th><th>Actions</th></tr></thead>
+          <tbody id="policies-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="page" id="page-audit">
+      <div class="panel">
+        <h2>Audit log</h2>
+        <div class="form-grid">
+          <input id="audit-limit" type="number" min="1" max="1000" value="200" />
+          <button id="audit-refresh" class="primary">Refresh audit</button>
+        </div>
+        <table>
+          <thead><tr><th>Time</th><th>Event</th><th>Actor</th><th>Result</th><th>Target</th></tr></thead>
+          <tbody id="audit-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="page" id="page-docs">
+      <div class="panel">
+        <h2>API quick reference</h2>
+        <p class="muted">No account login flow required for the dashboard.</p>
+        <pre class="muted">GET  /api/nodes
+POST /api/nodes
+GET  /api/sessions
+POST /api/sessions
+GET  /api/policies
+POST /api/policies
+GET  /api/audit?limit=200</pre>
+      </div>
+    </section>
   </div>
 
-  <!-- Features -->
-  <div id="features" class="section-bg">
-    <div class="section">
-      <div class="section-hd">
-        <div class="stag">Platform Features</div>
-        <h2 class="stitle">Built for <span style="color:var(--g1)">reliability</span></h2>
-      </div>
-      <div class="grid3">
-        <div class="feat-item"><div class="feat-ico"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M10 2L3 5v5c0 4.4 3.1 8.5 7 9.5 3.9-1 7-5.1 7-9.5V5L10 2z" stroke="#22c55e" stroke-width="1.5"/><path d="M7 10l2 2 4-4" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/></svg></div><div><h4>mTLS Everywhere</h4><p>All service-to-service communication is encrypted and mutually authenticated with automatic certificate rotation.</p></div></div>
-        <div class="feat-item"><div class="feat-ico"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="#22c55e" stroke-width="1.5"/><path d="M10 6v4l3 3" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/></svg></div><div><h4>Sub-2ms P99</h4><p>Latency-aware routing with predictive load balancing keeps your tail latency consistently below 2ms.</p></div></div>
-        <div class="feat-item"><div class="feat-ico"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" stroke="#22c55e" stroke-width="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5" stroke="#22c55e" stroke-width="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5" stroke="#22c55e" stroke-width="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5" stroke="#22c55e" stroke-width="1.5"/></svg></div><div><h4>Distributed Sharding</h4><p>Horizontally scale any dataset across thousands of shards with hot-shard detection and automatic compaction.</p></div></div>
-        <div class="feat-item"><div class="feat-ico"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M3 10a7 7 0 1114 0A7 7 0 013 10z" stroke="#22c55e" stroke-width="1.5"/><path d="M10 3c0 0-3 3-3 7s3 7 3 7M10 3c0 0 3 3 3 7s-3 7-3 7M3 10h14" stroke="#22c55e" stroke-width="1" opacity=".6"/></svg></div><div><h4>Global Edge Network</h4><p>150+ points of presence with anycast routing ensure users always hit the nearest available node.</p></div></div>
-        <div class="feat-item"><div class="feat-ico"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="16" height="10" rx="2" stroke="#22c55e" stroke-width="1.5"/><path d="M6 9h8M6 12h5" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/></svg></div><div><h4>JWT Dashboard</h4><p>Create, sign, verify, and inspect JSON Web Tokens interactively with an embedded key management UI.</p></div></div>
-        <div class="feat-item"><div class="feat-ico"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M2 14L10 2l8 12H2z" stroke="#22c55e" stroke-width="1.5" fill="none"/><path d="M10 10v2.5M10 14.5v.5" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/></svg></div><div><h4>Smart Alerting</h4><p>ML anomaly detection with noise reduction and automated runbook execution reduces MTTR by 80%.</p></div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Stats band -->
-  <div class="stats-band">
-    <div class="stats-inner">
-      <div><div class="sband-num">5B+</div><div class="sband-lbl">Requests / Day</div></div>
-      <div><div class="sband-num">99.99%</div><div class="sband-lbl">Uptime SLA</div></div>
-      <div><div class="sband-num">12K+</div><div class="sband-lbl">Active Nodes</div></div>
-      <div><div class="sband-num">40+</div><div class="sband-lbl">Regions</div></div>
-      <div><div class="sband-num">SOC2</div><div class="sband-lbl">Type II Cert.</div></div>
-    </div>
-  </div>
-
-  <!-- CTA -->
-  <div class="cta-band">
-    <h2>Ready to take control?</h2>
-    <p>Join thousands of teams running critical infrastructure on Logo.</p>
-    <button class="btn btn-primary btn-lg" id="cta-open-control-plane">Open Control Plane →</button>
-  </div>
-
-  <!-- Footer -->
-  <div class="land-footer">
-    <div class="foot-logo">Logo</div>
-    <div class="foot-links"><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Security</a><a href="#">Status</a></div>
-    <div class="foot-copy">© 2026 Logo Systems. All rights reserved.</div>
-  </div>
-</div><!-- /landing -->
-
-<!-- ══════════════════════ APP SHELL ══════════════════════ -->
-<div id="app">
-  <header class="app-header">
-    <div class="app-header-logo">
-      <svg viewBox="0 0 30 30" fill="none" width="26" height="26"><polygon points="15,1 27,8 27,22 15,29 3,22 3,8" fill="rgba(34,197,94,.15)" stroke="#22c55e" stroke-width="1.4"/><circle cx="15" cy="15" r="4.5" fill="#22c55e"/></svg>
-      Logo
-    </div>
-    <div class="app-search">
-      <svg class="search-ico" width="14" height="14" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="6" stroke="#6b7280" stroke-width="1.8"/><path d="M14 14l3 3" stroke="#6b7280" stroke-width="1.8" stroke-linecap="round"/></svg>
-      <input type="text" placeholder="Search nodes, policies…" id="app-search"/>
-    </div>
-    <div class="app-hd-right">
-      <div class="env-badge">prod</div>
-      <div class="hd-user">
-        <div class="hd-av" id="hd-av">U</div>
-        <span id="hd-user-lbl">user</span>
-        <span class="role-chip" id="hd-role">viewer</span>
-      </div>
-      <button class="btn btn-ghost btn-sm" id="app-logout">Sign Out</button>
-    </div>
-  </header>
-
-  <div class="app-layout">
-    <aside class="sidebar">
-      <div>
-        <div class="sb-section">Overview</div>
-        <div class="sb-item active" data-page="dashboard"><svg viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>Dashboard</div>
-        <div class="sb-section">Services</div>
-        <div class="sb-item" data-page="proxy"><svg viewBox="0 0 20 20" fill="none"><circle cx="4" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/><circle cx="16" cy="5" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="16" cy="15" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M6.5 9l4-3M6.5 11l4 3" stroke="currentColor" stroke-width="1.3"/></svg>Proxy</div>
-        <div class="sb-item" data-page="shards"><svg viewBox="0 0 20 20" fill="none"><polygon points="10,2 18,6 18,14 10,18 2,14 2,6" fill="none" stroke="currentColor" stroke-width="1.5"/><polygon points="10,6 14,8 14,12 10,14 6,12 6,8" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".6"/></svg>Shards</div>
-        <div class="sb-item" data-page="holography"><svg viewBox="0 0 20 20" fill="none"><ellipse cx="10" cy="10" rx="8" ry="3" fill="none" stroke="currentColor" stroke-width="1.5"/><ellipse cx="10" cy="10" rx="5" ry="2" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".6"/><circle cx="10" cy="10" r="1.5" fill="currentColor"/></svg>Holography</div>
-        <div class="sb-item" data-page="hololang"><svg viewBox="0 0 20 20" fill="none"><path d="M5 8l-3 2 3 2M15 8l3 2-3 2M12 6l-2.5 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>HoloLang</div>
-        <div class="sb-item" data-page="os"><svg viewBox="0 0 20 20" fill="none"><rect x="2" y="3" width="16" height="5" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="12" width="16" height="5" rx="1.5" stroke="currentColor" stroke-width="1.5" opacity=".5"/><circle cx="5" cy="5.5" r="1" fill="currentColor"/><circle cx="5" cy="14.5" r="1" fill="currentColor" opacity=".5"/></svg>Canvas IDE</div>
-        <div class="sb-section">Infrastructure</div>
-        <div class="sb-item" data-page="nodes"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="3" r="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="10" cy="17" r="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="3" cy="10" r="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="17" cy="10" r="1.5" stroke="currentColor" stroke-width="1.3"/><line x1="10" y1="5" x2="10" y2="7" stroke="currentColor" stroke-width="1.3"/><line x1="10" y1="13" x2="10" y2="15" stroke="currentColor" stroke-width="1.3"/><line x1="5" y1="10" x2="7" y2="10" stroke="currentColor" stroke-width="1.3"/><line x1="13" y1="10" x2="15" y2="10" stroke="currentColor" stroke-width="1.3"/></svg>Nodes<span class="sb-badge" id="badge-nodes">—</span></div>
-        <div class="sb-item" data-page="sessions"><svg viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 8h8M6 12h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Sessions</div>
-        <div class="sb-item" data-page="policies"><svg viewBox="0 0 20 20" fill="none"><path d="M10 2L3 5v5c0 4.4 3.1 8.5 7 9.5 3.9-1 7-5.1 7-9.5V5L10 2z" stroke="currentColor" stroke-width="1.5"/><path d="M7 10l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Policies</div>
-        <div class="sb-section">Tools</div>
-        <div class="sb-item" data-page="jwt"><svg viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="16" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 10h6M10 8v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".6"/></svg>JWT Creator</div>
-        <div class="sb-item" data-page="audit"><svg viewBox="0 0 20 20" fill="none"><path d="M4 4h12v12H4z" fill="none" stroke="currentColor" stroke-width="1.5" rx="2"/><path d="M7 8h6M7 11h4M7 14h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Audit Log</div>
-        <div class="sb-item" data-page="planning"><svg viewBox="0 0 20 20" fill="none"><path d="M3 6h14M3 10h14M3 14h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Planning</div>
-        <div class="sb-item" data-page="docs"><svg viewBox="0 0 20 20" fill="none"><rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 6h8M6 9h8M6 12h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Documentation</div>
-      </div>
-      <div class="sb-footer"><span class="online-dot"></span>Logo v2.0 · Connected</div>
-    </aside>
-
-    <main class="content">
-
-      <div id="demo-mode-bar" class="alert alert-info demo-mode-bar" style="display:none">⚠️ &nbsp;No API backend configured — this is a UI preview. Live data is unavailable. To connect a control-plane server, set <code>API_BASE_URL</code> in the repository variables and redeploy.</div>
-
-      <!-- Dashboard -->
-      <div class="page active" id="page-dashboard">
-        <div class="pg-hd"><div><h2>Dashboard</h2><p>Real-time overview of your control plane.</p></div><button class="btn btn-primary btn-sm" id="dash-refresh">↺ Refresh</button></div>
-        <div class="stats-row" id="dash-stats">
-          <div class="stat-card"><div class="sc-ico"><svg width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="#22c55e" stroke-width="1.5"/><circle cx="10" cy="3" r="1.5" stroke="#22c55e" stroke-width="1.3"/><circle cx="17" cy="10" r="1.5" stroke="#22c55e" stroke-width="1.3"/><circle cx="3" cy="10" r="1.5" stroke="#22c55e" stroke-width="1.3"/><circle cx="10" cy="17" r="1.5" stroke="#22c55e" stroke-width="1.3"/></svg></div><div class="sc-lbl">Nodes</div><div class="sc-val" id="s-nodes">—</div><div class="sc-sub">Registered</div></div>
-          <div class="stat-card"><div class="sc-ico"><svg width="16" height="16" viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="2" stroke="#22c55e" stroke-width="1.5"/><path d="M6 8h8M6 12h5" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="sc-lbl">Active Sessions</div><div class="sc-val" id="s-sessions">—</div><div class="sc-sub">Live connections</div></div>
-          <div class="stat-card"><div class="sc-ico"><svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 2L3 5v5c0 4.4 3.1 8.5 7 9.5 3.9-1 7-5.1 7-9.5V5L10 2z" stroke="#22c55e" stroke-width="1.5"/></svg></div><div class="sc-lbl">Policies</div><div class="sc-val" id="s-policies">—</div><div class="sc-sub">ACL rules loaded</div></div>
-          <div class="stat-card"><div class="sc-ico"><svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M4 4h12v12H4z" fill="none" stroke="#22c55e" stroke-width="1.5" rx="2"/><path d="M7 8h6M7 11h4" stroke="#22c55e" stroke-width="1.3" stroke-linecap="round"/></svg></div><div class="sc-lbl">Audit Events</div><div class="sc-val" id="s-audit">—</div><div class="sc-sub">Logged</div></div>
-        </div>
-        <div id="dash-alert"></div>
-        <div class="tw">
-          <table><thead><tr><th>Host</th><th>Role</th><th>Region</th><th>Status</th></tr></thead><tbody id="dash-nodes-tbody"></tbody></table>
-        </div>
-      </div>
-
-      <!-- Proxy -->
-      <div class="page" id="page-proxy">
-        <div class="pg-hd"><div><h2>Proxy Effective Engine</h2><p>logrodzyni — traffic routing, upstream clusters, and mTLS policy.</p></div><button class="btn btn-primary btn-sm" id="add-node-btn">+ Register Node</button></div>
-        <div class="stats-row">
-          <div class="stat-card"><div class="sc-lbl">Throughput</div><div class="sc-val">2.4 GB/s</div><div class="sc-sub">Current</div></div>
-          <div class="stat-card"><div class="sc-lbl">P99 Latency</div><div class="sc-val">1.8ms</div><div class="sc-sub">Last 5 min</div></div>
-          <div class="stat-card"><div class="sc-lbl">Error Rate</div><div class="sc-val" style="color:var(--ok)">0.01%</div><div class="sc-sub">5xx responses</div></div>
-          <div class="stat-card"><div class="sc-lbl">Active Routes</div><div class="sc-val" id="proxy-routes-stat">—</div><div class="sc-sub">Live</div></div>
-        </div>
-        <div class="tw">
-          <table><thead><tr><th>Host</th><th>Port</th><th>Role</th><th>Region</th><th>Status</th><th>Created</th><th></th></tr></thead><tbody id="proxy-nodes-tbody"></tbody></table>
-        </div>
-      </div>
-
-      <!-- Shards -->
-      <div class="page" id="page-shards">
-        <div class="pg-hd"><div><h2>Shard Framework</h2><p>Tensor-native distributed data — partitions, blocks, and encrypted graph records.</p></div><button class="btn btn-primary btn-sm">+ Add Shard</button></div>
-        <div class="stats-row">
-          <div class="stat-card"><div class="sc-lbl">Total Shards</div><div class="sc-val">128</div><div class="sc-sub">Partitions</div></div>
-          <div class="stat-card"><div class="sc-lbl">Healthy</div><div class="sc-val" style="color:var(--ok)">126</div><div class="sc-sub">In sync</div></div>
-          <div class="stat-card"><div class="sc-lbl">Rebal. Jobs</div><div class="sc-val">2</div><div class="sc-sub">Running</div></div>
-          <div class="stat-card"><div class="sc-lbl">Avg Lag</div><div class="sc-val">12ms</div><div class="sc-sub">Replication</div></div>
-        </div>
-        <div class="grid2" style="margin-bottom:1.25rem">
-          <div class="card">
-            <div class="card-title">Tensor Model</div>
-            <ul style="list-style:none;display:flex;flex-direction:column;gap:.65rem">
-              <li style="display:flex;gap:.7rem;font-size:.84rem;color:var(--muted2)"><span style="color:var(--g1);flex-shrink:0;font-weight:700">▸</span><span><strong style="color:var(--white)">Tensor objects</strong> — Data assigned to a tensor is shared across any environment holding the same reference. Same environment = same data.</span></li>
-              <li style="display:flex;gap:.7rem;font-size:.84rem;color:var(--muted2)"><span style="color:var(--g1);flex-shrink:0;font-weight:700">▸</span><span><strong style="color:var(--white)">Graph-collected data</strong> — Tensors collect data from graphs. Graph nodes represent relationships; edges encode data flow.</span></li>
-              <li style="display:flex;gap:.7rem;font-size:.84rem;color:var(--muted2)"><span style="color:var(--g1);flex-shrink:0;font-weight:700">▸</span><span><strong style="color:var(--white)">Blocks</strong> — Register graph and shard data, then persist in <code style="background:rgba(34,197,94,.1);padding:.05rem .3rem;border-radius:4px;font-family:var(--mono)">[~]</code> encrypted form. Safe for public distribution.</span></li>
-              <li style="display:flex;gap:.7rem;font-size:.84rem;color:var(--muted2)"><span style="color:var(--g1);flex-shrink:0;font-weight:700">▸</span><span><strong style="color:var(--white)">Open registry</strong> — Tensors discover peers by matching attributes and exchange data via network-regulated channels. No central coordinator.</span></li>
-            </ul>
-          </div>
-          <div class="card">
-            <div class="card-title">Kaizen &amp; Lean Records</div>
-            <p style="font-size:.85rem;color:var(--muted2);line-height:1.75;margin-bottom:.75rem">Every shard write follows kaizen-lean principles: minimal, precise, purpose-built. Macro and algorithm mappings govern how records are persisted and replicated.</p>
-            <p style="font-size:.85rem;color:var(--muted2);line-height:1.75">Encrypted blocks ensure publicly safe distribution — the <code style="background:rgba(34,197,94,.1);padding:.05rem .3rem;border-radius:4px;font-family:var(--mono)">[~]</code> storage format provides at-rest confidentiality for tensor and graph data.</p>
-          </div>
-        </div>
-        <div class="tw"><table><thead><tr><th>Shard ID</th><th>Primary</th><th>Replicas</th><th>Size</th><th>Lag</th><th>Status</th></tr></thead><tbody id="shards-tbody">
-          <tr><td>shard-001</td><td>node-us-e-01</td><td>3</td><td>24 GB</td><td>8ms</td><td><span class="tag tag-ok">healthy</span></td></tr>
-          <tr><td>shard-002</td><td>node-eu-w-01</td><td>3</td><td>31 GB</td><td>11ms</td><td><span class="tag tag-ok">healthy</span></td></tr>
-          <tr><td>shard-003</td><td>node-ap-s-01</td><td>2</td><td>18 GB</td><td>22ms</td><td><span class="tag tag-warn">rebalancing</span></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <!-- Holography -->
-      <div class="page" id="page-holography">
-        <div class="pg-hd"><div><h2>Holography</h2><p>Multi-region state projections and causal consistency.</p></div><button class="btn btn-primary btn-sm">+ New Projection</button></div>
-        <div class="stats-row">
-          <div class="stat-card"><div class="sc-lbl">Projections</div><div class="sc-val">8</div><div class="sc-sub">Active</div></div>
-          <div class="stat-card"><div class="sc-lbl">Regions Synced</div><div class="sc-val">6</div><div class="sc-sub">Cross-region</div></div>
-          <div class="stat-card"><div class="sc-lbl">Conflicts</div><div class="sc-val" style="color:var(--ok)">0</div><div class="sc-sub">Last 24h</div></div>
-          <div class="stat-card"><div class="sc-lbl">Avg Lag</div><div class="sc-val">34ms</div><div class="sc-sub">Global</div></div>
-        </div>
-        <div class="tw"><table><thead><tr><th>Projection</th><th>Source</th><th>Targets</th><th>Lag</th><th>Consistency</th><th>Status</th></tr></thead><tbody id="holo-tbody">
-          <tr><td>user-state</td><td>us-east-1</td><td>eu-west-1, ap-south-1</td><td>18ms</td><td><span class="tag tag-ok">causal</span></td><td><span class="tag tag-ok">live</span></td></tr>
-          <tr><td>policy-mirror</td><td>us-east-1</td><td>all</td><td>54ms</td><td><span class="tag tag-accent">eventual</span></td><td><span class="tag tag-ok">live</span></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <!-- OS -->
-      <div class="page" id="page-os">
-        <div class="pg-hd"><div><h2>Canvas IDE</h2><p>Operating Systems — process orchestration, ML/NN, DSL, and runbooks.</p></div><button class="btn btn-primary btn-sm">▶ Run Runbook</button></div>
-        <div class="stats-row">
-          <div class="stat-card"><div class="sc-lbl">Processes</div><div class="sc-val">42</div><div class="sc-sub">Running</div></div>
-          <div class="stat-card"><div class="sc-lbl">CPU Avg</div><div class="sc-val">23%</div><div class="sc-sub">Fleet</div></div>
-          <div class="stat-card"><div class="sc-lbl">Mem Avg</div><div class="sc-val">61%</div><div class="sc-sub">Fleet</div></div>
-          <div class="stat-card"><div class="sc-lbl">Alerts</div><div class="sc-val" style="color:var(--warn)">3</div><div class="sc-sub">Open</div></div>
-        </div>
-        <div class="grid2" style="margin-bottom:1.25rem">
-          <div class="card">
-            <div class="card-title">Canvas IDE</div>
-            <p style="font-size:.85rem;color:var(--muted2);line-height:1.75;margin-bottom:.75rem">Canvas IDE collects all four logrodzyni pillars — proxy, shards, HoloLang, and holography — into a single integrated development environment with ML and neural network primitives built directly into its DSL.</p>
-            <ul style="list-style:none;display:flex;flex-direction:column;gap:.5rem">
-              <li style="font-size:.82rem;color:var(--muted2)"><span style="color:var(--g1);font-weight:700">▸</span> <strong style="color:var(--white)">DSL</strong> — Unified grammar for routing, shard topology, and ML pipeline config</li>
-              <li style="font-size:.82rem;color:var(--muted2)"><span style="color:var(--g1);font-weight:700">▸</span> <strong style="color:var(--white)">ML / NN built-in</strong> — Training, inference, and anomaly detection as first-class constructs</li>
-              <li style="font-size:.82rem;color:var(--muted2)"><span style="color:var(--g1);font-weight:700">▸</span> <strong style="color:var(--white)">C Preprocessor</strong> — Macro expansion and conditional compilation at IDE level</li>
-              <li style="font-size:.82rem;color:var(--muted2)"><span style="color:var(--g1);font-weight:700">▸</span> <strong style="color:var(--white)">Proto</strong> — Protocol Buffer schemas for typed cross-component contracts</li>
-            </ul>
-          </div>
-          <div class="card">
-            <div class="card-title">Status <span class="tag tag-warn" style="font-size:.69rem;vertical-align:middle;margin-left:.35rem">In Development</span></div>
-            <p style="font-size:.85rem;color:var(--muted2);line-height:1.75">Canvas IDE is currently in active development. Full IDE release and language specification will be published when the project goes public.</p>
-            <div class="alert alert-info" style="margin-top:.85rem;font-size:.82rem">📋 &nbsp;Full Canvas IDE specification — coming soon.</div>
-          </div>
-        </div>
-        <div class="tw"><table><thead><tr><th>Process</th><th>Node</th><th>CPU</th><th>Memory</th><th>PID</th><th>Status</th></tr></thead><tbody id="os-tbody">
-          <tr><td>proxy-core</td><td>node-us-e-01</td><td>18%</td><td>512 MB</td><td>1042</td><td><span class="tag tag-ok">running</span></td></tr>
-          <tr><td>shard-rebalancer</td><td>node-eu-w-01</td><td>34%</td><td>1.2 GB</td><td>2218</td><td><span class="tag tag-warn">high-cpu</span></td></tr>
-          <tr><td>audit-ingester</td><td>node-us-e-01</td><td>4%</td><td>128 MB</td><td>3301</td><td><span class="tag tag-ok">running</span></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <!-- HoloLang -->
-      <div class="page" id="page-hololang">
-        <div class="pg-hd">
-          <div><h2>HoloLang</h2><p>Experimental programming language for processing pipelines and device-level programming.</p></div>
-          <span class="tag" style="font-size:.76rem;padding:.3rem .9rem;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);color:var(--g4);align-self:center">Experimental</span>
-        </div>
-        <div class="stats-row">
-          <div class="stat-card"><div class="sc-lbl">Status</div><div class="sc-val" style="font-size:1.05rem;color:var(--warn)">Active Dev</div><div class="sc-sub">Compiler WIP</div></div>
-          <div class="stat-card"><div class="sc-lbl">Paradigm</div><div class="sc-val" style="font-size:1.05rem">Tensor-Native</div><div class="sc-sub">Processing &amp; Devices</div></div>
-          <div class="stat-card"><div class="sc-lbl">Design</div><div class="sc-val" style="font-size:1.05rem">Kaizen</div><div class="sc-sub">Lean + Macro</div></div>
-          <div class="stat-card"><div class="sc-lbl">Compiler</div><div class="sc-val" style="font-size:1.05rem">Custom</div><div class="sc-sub">Native Toolchain</div></div>
-        </div>
-        <div class="grid2" style="margin-bottom:1.25rem">
-          <div class="card">
-            <div class="card-title">About HoloLang</div>
-            <p style="font-size:.87rem;color:var(--muted2);line-height:1.75;margin-bottom:.8rem">HoloLang is an experimental programming language designed for <strong style="color:var(--white)">processing pipelines</strong> and <strong style="color:var(--white)">device-level programming</strong>. It ships with its own native compiler and follows a deliberate, methodology-first approach to language and system design.</p>
-            <p style="font-size:.87rem;color:var(--muted2);line-height:1.75">Built around <strong style="color:var(--white)">kaizen</strong> (continuous, incremental improvement) and <strong style="color:var(--white)">lean programming</strong> principles — every construct has a minimal, precise purpose. Macro and algorithm mappings are first-class citizens of the grammar.</p>
-          </div>
-          <div class="card">
-            <div class="card-title">Core Concepts</div>
-            <ul style="list-style:none;display:flex;flex-direction:column;gap:.65rem">
-              <li style="display:flex;gap:.7rem;font-size:.84rem;color:var(--muted2)"><span style="color:var(--g1);flex-shrink:0;font-weight:700">▸</span><span><strong style="color:var(--white)">Tensor objects</strong> — Data assigned to a tensor is shared across any environment holding the same tensor reference.</span></li>
-              <li style="display:flex;gap:.7rem;font-size:.84rem;color:var(--muted2)"><span style="color:var(--g1);flex-shrink:0;font-weight:700">▸</span><span><strong style="color:var(--white)">Attribute-driven networking</strong> — Tensors discover peers by matching attributes and exchange data via network-regulated channels.</span></li>
-              <li style="display:flex;gap:.7rem;font-size:.84rem;color:var(--muted2)"><span style="color:var(--g1);flex-shrink:0;font-weight:700">▸</span><span><strong style="color:var(--white)">Macro mappings</strong> — Algorithmic patterns encoded as macros for safe, repeatable device-level transformations.</span></li>
-              <li style="display:flex;gap:.7rem;font-size:.84rem;color:var(--muted2)"><span style="color:var(--g1);flex-shrink:0;font-weight:700">▸</span><span><strong style="color:var(--white)">Open registry</strong> — No admin gating. Each owner controls their own namespace. Free for all.</span></li>
-            </ul>
-          </div>
-        </div>
-        <div class="card" style="margin-bottom:1.25rem">
-          <div class="card-title">Compiler &amp; Toolchain</div>
-          <div class="grid2">
-            <div>
-              <p style="font-size:.87rem;color:var(--muted2);line-height:1.75;margin-bottom:.75rem">The HoloLang compiler is a native toolchain purpose-built for the language. It targets processing units and device-level execution environments, optimised for kaizen-driven iterative pipelines.</p>
-              <p style="font-size:.87rem;color:var(--muted2);line-height:1.75">Compiler specification, release timeline, and binaries will be published when the project goes public.</p>
-            </div>
-            <div style="background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);padding:1.1rem;font-family:var(--mono);font-size:.8rem;color:var(--g3);line-height:1.8">
-              <span style="color:var(--muted);font-size:.72rem"># HoloLang — preview syntax</span><br/>
-              tensor data := graph.collect()<br/>
-              block.register(data, encrypt:[~])<br/>
-              shard.distribute(block, mode:open)
-            </div>
-          </div>
-        </div>
-        <div class="alert alert-info">📋 &nbsp;HoloLang is in active development. Full language specification, grammar reference, and compiler release — coming soon when the project is publicly shared.</div>
-      </div>
-
-      <!-- Nodes -->
-      <div class="page" id="page-nodes">
-        <div class="pg-hd"><div><h2>Nodes</h2><p>All registered proxy nodes in your network.</p></div>
-          <div style="display:flex;gap:.6rem">
-            <button class="btn btn-muted btn-sm" id="refresh-nodes-btn">↺ Refresh</button>
-            <button class="btn btn-primary btn-sm" id="add-node-btn2">+ Register Node</button>
-          </div>
-        </div>
-        <div id="nodes-alert"></div>
-        <div class="tw"><table><thead><tr><th>Host</th><th>Port</th><th>Role</th><th>Region</th><th>Status</th><th>Created</th><th></th></tr></thead><tbody id="nodes-tbody"></tbody></table></div>
-      </div>
-
-      <!-- Sessions -->
-      <div class="page" id="page-sessions">
-        <div class="pg-hd"><div><h2>Sessions</h2><p>Active proxy connections.</p></div></div>
-        <div class="tw"><table><thead><tr><th>ID</th><th>Client IP</th><th>Destination</th><th>Status</th><th>Started</th><th></th></tr></thead><tbody id="sessions-tbody"></tbody></table></div>
-      </div>
-
-      <!-- Policies -->
-      <div class="page" id="page-policies">
-        <div class="pg-hd"><div><h2>Policies</h2><p>ACL and routing rules.</p></div><button class="btn btn-primary btn-sm" id="add-policy-btn">+ New Policy</button></div>
-        <div id="policies-alert"></div>
-        <div class="tw"><table><thead><tr><th>Name</th><th>Action</th><th>Priority</th><th>Src CIDR</th><th>Dst Host</th><th>Enabled</th><th></th></tr></thead><tbody id="policies-tbody"></tbody></table></div>
-      </div>
-
-      <!-- JWT Creator -->
-      <div class="page" id="page-jwt">
-        <div class="pg-hd"><div><h2>JWT Creator</h2><p>Build, sign, and verify JSON Web Tokens.</p></div></div>
-        <div class="jwt-grid">
-          <div>
-            <div class="card" style="margin-bottom:1rem">
-              <div class="card-title">Create Token <span style="font-size:.7rem;font-weight:700;padding:.12rem .45rem;background:rgba(34,197,94,.12);border-radius:100px;color:var(--g1);margin-left:.4rem">HS256</span></div>
-              <div class="fg"><label>Secret (HS256)</label><input class="fi" id="jwt-secret" type="password" placeholder="your-secret-key" value="dev-secret-change-me"/></div>
-              <div class="fg"><label>Subject (sub)</label><input class="fi" id="jwt-sub" type="text" placeholder="user123"/></div>
-              <div class="fg"><label>Audience (aud)</label><input class="fi" id="jwt-aud" type="text" placeholder="logo-control-plane"/></div>
-              <div class="fg"><label>Expires in</label>
-                <select class="fsel" id="jwt-exp">
-                  <option value="3600">1 hour</option>
-                  <option value="28800" selected>8 hours</option>
-                  <option value="86400">24 hours</option>
-                  <option value="604800">7 days</option>
-                  <option value="0">Never</option>
-                </select>
-              </div>
-              <div class="fg"><label>Extra claims (JSON)</label><textarea class="fta" id="jwt-extra" rows="3" placeholder='{"role":"admin","env":"prod"}'></textarea></div>
-              <button class="btn btn-primary btn-sm" id="jwt-gen-btn">Generate Token</button>
-              <div id="jwt-alert" style="margin-top:.5rem"></div>
-            </div>
-            <div class="card"><div class="card-title">Decoded Claims</div><div class="code-block" id="jwt-decoded" style="color:var(--g3)">—</div></div>
-          </div>
-          <div>
-            <div class="card" style="margin-bottom:1rem">
-              <div class="card-title">Token Output</div>
-              <div class="code-block jwt-output" id="jwt-output" style="position:relative;min-height:120px"><em style="color:var(--muted)">Token will appear here…</em><button class="copy-btn" id="jwt-copy-btn">Copy</button></div>
-            </div>
-            <div class="card" style="margin-bottom:1rem">
-              <div class="card-title">Decode / Verify</div>
-              <div class="fg"><textarea class="fta code-area" id="jwt-decode-in" rows="4" placeholder="Paste a JWT here…"></textarea></div>
-              <div class="fg"><label>Verification secret (optional)</label><input class="fi" id="jwt-decode-sec" type="password" placeholder="leave empty to decode only"/></div>
-              <button class="btn btn-muted btn-sm" id="jwt-decode-btn">Decode</button>
-              <div class="code-block" id="jwt-decode-out" style="margin-top:.75rem;min-height:80px;color:var(--g3)">—</div>
-            </div>
-            <div class="card">
-              <div class="card-title">Security Tips</div>
-              <ul class="jwt-tips">
-                <li>Never expose your signing secret in client-side code or logs.</li>
-                <li>Always set an expiry (<code>exp</code>). Short-lived tokens ≤8h reduce blast radius.</li>
-                <li>Store tokens in <code>httpOnly</code> cookies or memory — never <code>localStorage</code>.</li>
-                <li>Always verify the <code>alg</code> header server-side; reject <code>alg:none</code> unconditionally.</li>
-                <li>Include minimum required claims; never embed sensitive PII in payload.</li>
-                <li>Rotate secrets regularly and keep an old-key grace period for in-flight tokens.</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Audit Log -->
-      <div class="page" id="page-audit">
-        <div class="pg-hd"><div><h2>Audit Log</h2><p>Persistent event history.</p></div><button class="btn btn-muted btn-sm" id="audit-refresh-btn">↺ Refresh</button></div>
-        <div class="tw"><table><thead><tr><th>Time</th><th>Event</th><th>Actor</th><th>Target</th><th>Result</th></tr></thead><tbody id="audit-tbody"></tbody></table></div>
-      </div>
-
-      <!-- Planning -->
-      <div class="page" id="page-planning">
-        <div class="pg-hd"><div><h2>Implementation Plan</h2><p>Full delivery roadmap.</p></div></div>
-        <div class="plan-card"><h3><span class="phase-tag">Phase 1</span> Scope &amp; Constraints</h3><ul><li>Linux-first; cross-platform C++ via Boost.Asio; Node.js for web app</li><li>Up to 10 000 concurrent sessions per relay node (epoll I/O model)</li><li>Goal: &lt; 5ms p99 added overhead per hop; AES-256-GCM data plane</li></ul></div>
-        <div class="plan-card"><h3><span class="phase-tag">Phase 2</span> Repository &amp; Delivery</h3><ul><li>Monorepo: proxy-core/, web-app/, masking-client/, shared-security/, deploy/, docs/</li><li>CI: GitHub Actions — build, unit tests, CodeQL, Trivy, npm audit</li><li>CD: Docker Hub images, optional Kubernetes/Nomad deployment</li></ul></div>
-        <div class="plan-card"><h3><span class="phase-tag">Phase 3</span> Architecture</h3><ul><li>Layered circuit: Ingress Gateway → Relay Nodes → Egress → Policy Engine</li><li>mTLS with short-lived leaf certs between every hop</li><li>Observability: Prometheus metrics, structured JSON logs, OpenTelemetry traces</li></ul></div>
-        <div class="plan-card"><h3><span class="phase-tag">Phase 4–8</span> Proxy Core, Security, Testing, Ops, Docs</h3><ul><li>Boost.Asio async I/O; SOCKS5 + HTTP CONNECT; token-bucket rate limiter</li><li>TLS 1.3-only; ECDHE key exchange; automated cert rotation</li><li>Test matrix: unit (Catch2/Jest), integration (supertest), perf (wrk/k6)</li></ul></div>
-      </div>
-
-      <!-- Documentation -->
-      <div class="page" id="page-docs">
-        <div class="pg-hd"><div><h2>Documentation</h2><p>Guides, API reference, and integration examples.</p></div></div>
-        <div class="docs-layout">
-          <div class="docs-nav">
-            <div class="docs-nav-sec">Getting Started</div>
-            <div class="docs-nav-item active" data-doc="intro">Introduction</div>
-            <div class="docs-nav-item" data-doc="quickstart">Quickstart</div>
-            <div class="docs-nav-item" data-doc="auth-doc">Authentication</div>
-            <div class="docs-nav-sec">Services</div>
-            <div class="docs-nav-item" data-doc="proxy-doc">Proxy Engine</div>
-            <div class="docs-nav-item" data-doc="shards-doc">Shard Framework</div>
-            <div class="docs-nav-item" data-doc="holo-doc">Holography</div>
-            <div class="docs-nav-item" data-doc="hololang-doc">HoloLang</div>
-            <div class="docs-nav-item" data-doc="os-doc">Canvas IDE</div>
-            <div class="docs-nav-sec">API Reference</div>
-            <div class="docs-nav-item" data-doc="api-auth">Auth Endpoints</div>
-            <div class="docs-nav-item" data-doc="api-nodes">Nodes API</div>
-            <div class="docs-nav-item" data-doc="api-jwt">JWT Guide</div>
-          </div>
-          <div class="card doc-body" id="doc-body"></div>
-        </div>
-      </div>
-
-    </main>
-  </div>
-</div><!-- /app -->
-
-<!-- Modals -->
-<div class="modal-overlay" id="modal-node">
-  <div class="modal">
-    <div class="modal-hd"><h3>Register Node</h3><button class="modal-x" data-modal="modal-node">✕</button></div>
-    <div class="modal-bd">
-      <div class="fg"><label style="font-size:.77rem;font-weight:600;color:var(--muted2);display:block;margin-bottom:.38rem">Host / IP</label><input class="fi" id="n-host" placeholder="10.0.0.1"/></div>
-      <div class="form-grid">
-        <div class="fg"><label style="font-size:.77rem;font-weight:600;color:var(--muted2);display:block;margin-bottom:.38rem">Port</label><input class="fi" id="n-port" type="number" placeholder="1080" min="1" max="65535"/></div>
-        <div class="fg"><label style="font-size:.77rem;font-weight:600;color:var(--muted2);display:block;margin-bottom:.38rem">Region</label><input class="fi" id="n-region" placeholder="us-east"/></div>
-      </div>
-      <div class="fg"><label style="font-size:.77rem;font-weight:600;color:var(--muted2);display:block;margin-bottom:.38rem">Role</label><select class="fsel" id="n-role"><option>ingress</option><option>relay</option><option>egress</option></select></div>
-    </div>
-    <div class="modal-ft"><button class="btn btn-muted btn-sm" data-modal="modal-node">Cancel</button><button class="btn btn-primary btn-sm" id="n-save-btn">Register</button></div>
-  </div>
-</div>
-<div class="modal-overlay" id="modal-policy">
-  <div class="modal">
-    <div class="modal-hd"><h3>New Policy</h3><button class="modal-x" data-modal="modal-policy">✕</button></div>
-    <div class="modal-bd">
-      <div class="fg"><label style="font-size:.77rem;font-weight:600;color:var(--muted2);display:block;margin-bottom:.38rem">Name</label><input class="fi" id="p-name" placeholder="block-tor-exit"/></div>
-      <div class="form-grid">
-        <div class="fg"><label style="font-size:.77rem;font-weight:600;color:var(--muted2);display:block;margin-bottom:.38rem">Action</label><select class="fsel" id="p-action"><option>allow</option><option>deny</option><option>rate-limit</option></select></div>
-        <div class="fg"><label style="font-size:.77rem;font-weight:600;color:var(--muted2);display:block;margin-bottom:.38rem">Priority</label><input class="fi" id="p-priority" type="number" placeholder="0"/></div>
-      </div>
-      <div class="fg"><label style="font-size:.77rem;font-weight:600;color:var(--muted2);display:block;margin-bottom:.38rem">Src CIDR</label><input class="fi" id="p-src" placeholder="0.0.0.0/0"/></div>
-      <div class="fg"><label style="font-size:.77rem;font-weight:600;color:var(--muted2);display:block;margin-bottom:.38rem">Dst Host (glob)</label><input class="fi" id="p-dst" placeholder="*.example.com"/></div>
-      <div class="fg"><label style="font-size:.77rem;font-weight:600;color:var(--muted2);display:block;margin-bottom:.38rem">Dst Ports</label><input class="fi" id="p-ports" placeholder="80,443"/></div>
-    </div>
-    <div class="modal-ft"><button class="btn btn-muted btn-sm" data-modal="modal-policy">Cancel</button><button class="btn btn-primary btn-sm" id="p-save-btn">Create</button></div>
-  </div>
-</div>
-
-<div id="toasts"></div>
-<div class="fab" id="fab" style="display:none"><button class="fab-main" title="Quick actions">＋</button></div>
-
-<script>
-  window.__API_BASE__ = window.__API_BASE__ || "";
-
-  (function () {
-    function loadScript(src, onComplete) {
-      var script = document.createElement("script");
-      script.src = src;
-      script.onload = function () {
-        if (onComplete) onComplete();
-      };
-      script.onerror = function () {
-        if (onComplete) onComplete();
-      };
-      document.body.appendChild(script);
-    }
-
-    function loadApp() {
-      loadScript("app.js");
-    }
-
-    fetch("config.js", { method: "HEAD" })
-      .then(function (response) {
-        if (response.ok) {
-          loadScript("config.js", loadApp);
-        } else {
-          loadApp();
-        }
-      })
-      .catch(function () {
-        loadApp();
-      });
-  })();
-</script>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+  <script src="app.js"></script>
 </body>
 </html>
